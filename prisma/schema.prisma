@@ -1,0 +1,333 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // SQLite for local/dev by default. For production, point DATABASE_URL at
+  // Postgres/MySQL and change provider to "postgresql" / "mysql".
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PlatformRole {
+  USER
+  ADMIN
+}
+
+enum BusinessType {
+  RETAILER
+  RESELLER
+  OUTLET
+  LIQUIDATOR
+  WHOLESALER
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum ListingUnit {
+  ITEM
+  LOT
+}
+
+enum ListingCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  CUSTOMER_RETURNS
+}
+
+enum FulfillmentType {
+  PICKUP
+  SHIPPING
+  BOTH
+}
+
+enum ListingStatus {
+  ACTIVE
+  PAUSED
+  SOLD_OUT
+  EXPIRED
+  REMOVED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+  WITHDRAWN
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  REFUNDED
+  FAILED
+}
+
+enum EscrowStatus {
+  NONE
+  HOLDING
+  RELEASED
+  REFUNDED
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  SHIPPED
+  PICKED_UP
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum DisputeStatus {
+  NONE
+  OPEN
+  RESOLVED_BUYER
+  RESOLVED_SELLER
+}
+
+enum NotificationType {
+  LISTING_MATCH
+  OFFER_RECEIVED
+  OFFER_UPDATED
+  PAYMENT_RECEIVED
+  ORDER_STATUS_CHANGED
+  REVIEW_RECEIVED
+  VERIFICATION_UPDATED
+  DISPUTE_UPDATED
+}
+
+model Business {
+  id                 String             @id @default(cuid())
+  name               String
+  type               BusinessType
+  category           String
+  country            String
+  city               String
+  address            String?
+  taxId              String
+  contactEmail       String
+  contactPhone       String?
+  verificationStatus VerificationStatus @default(PENDING)
+  verificationNote   String?
+
+  stripeAccountId    String?
+  stripeOnboarded    Boolean            @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  listings       Listing[]
+  offersMade     Offer[]         @relation("BuyerOffers")
+  savedSearches  SavedSearch[]
+  notifications  Notification[]
+  purchases      Transaction[]   @relation("BuyerTransactions")
+  sales          Transaction[]   @relation("SellerTransactions")
+  reviewsGiven   Review[]        @relation("ReviewerReviews")
+  reviewsReceived Review[]       @relation("RevieweeReviews")
+
+  @@index([verificationStatus])
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  name         String
+  platformRole PlatformRole @default(USER)
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Listing {
+  id          String @id @default(cuid())
+  sellerBusinessId String
+  sellerBusiness   Business @relation(fields: [sellerBusinessId], references: [id])
+
+  title       String
+  description String
+  category    String
+  photos      String @default("[]") // JSON-encoded array of image URLs
+
+  quantityAvailable Int
+  unit              ListingUnit      @default(ITEM)
+  condition         ListingCondition @default(NEW)
+
+  originalPrice Float
+  askingPrice   Float
+  minOrderQty   Int              @default(1)
+
+  fulfillment  FulfillmentType @default(BOTH)
+  locationCity String
+  locationCountry String
+
+  status    ListingStatus @default(ACTIVE)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers       Offer[]
+  transactions Transaction[]
+
+  @@index([status])
+  @@index([category])
+  @@index([sellerBusinessId])
+}
+
+model Offer {
+  id       String @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  buyerBusinessId String
+  buyerBusiness   Business @relation("BuyerOffers", fields: [buyerBusinessId], references: [id])
+
+  offeredPrice Float
+  quantity     Int
+  message      String?
+
+  status OfferStatus @default(PENDING)
+
+  counterPrice    Float?
+  counterQuantity Int?
+  counterMessage  String?
+
+  parentOfferId String?
+  parentOffer   Offer?  @relation("OfferChain", fields: [parentOfferId], references: [id])
+  children      Offer[] @relation("OfferChain")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transaction Transaction?
+
+  @@index([listingId])
+  @@index([buyerBusinessId])
+  @@index([status])
+}
+
+model Transaction {
+  id String @id @default(cuid())
+
+  offerId String @unique
+  offer   Offer  @relation(fields: [offerId], references: [id])
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  sellerBusinessId String
+  sellerBusiness   Business @relation("SellerTransactions", fields: [sellerBusinessId], references: [id])
+
+  buyerBusinessId String
+  buyerBusiness   Business @relation("BuyerTransactions", fields: [buyerBusinessId], references: [id])
+
+  quantity  Int
+  unitPrice Float
+  amount    Float
+
+  commissionRate   Float
+  commissionAmount Float
+  sellerPayoutAmount Float
+
+  paymentStatus PaymentStatus @default(PENDING)
+  escrowStatus  EscrowStatus  @default(NONE)
+  orderStatus   OrderStatus   @default(AWAITING_PAYMENT)
+
+  stripeCheckoutSessionId String?
+  stripePaymentIntentId   String?
+
+  disputeStatus DisputeStatus @default(NONE)
+  disputeReason String?
+  disputeNote   String?
+
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+  shippedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  reviews Review[]
+
+  @@index([orderStatus])
+  @@index([sellerBusinessId])
+  @@index([buyerBusinessId])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  reviewerBusinessId String
+  reviewerBusiness   Business @relation("ReviewerReviews", fields: [reviewerBusinessId], references: [id])
+
+  revieweeBusinessId String
+  revieweeBusiness   Business @relation("RevieweeReviews", fields: [revieweeBusinessId], references: [id])
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([transactionId, reviewerBusinessId])
+  @@index([revieweeBusinessId])
+}
+
+model SavedSearch {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  keyword  String?
+  category String?
+  location String?
+  minPrice Float?
+  maxPrice Float?
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  type   NotificationType
+  title  String
+  body   String
+  link   String?
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId, isRead])
+}
+
+model PlatformSetting {
+  id                String @id @default("singleton")
+  commissionPercent Float  @default(8)
+  updatedAt         DateTime @updatedAt
+}
