@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
   const where: Prisma.ListingWhereInput = { status: "ACTIVE" };
   if (q) {
     where.OR = [
-      { title: { contains: q } },
-      { description: { contains: q } },
+      { title: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
     ];
   }
   if (category) where.category = category;
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
       ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
       {
         OR: [
-          { locationCity: { contains: location } },
-          { locationCountry: { contains: location } },
+          { locationCity: { contains: location, mode: "insensitive" } },
+          { locationCountry: { contains: location, mode: "insensitive" } },
         ],
       },
     ];

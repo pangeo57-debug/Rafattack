@@ -15,9 +15,7 @@ shipping between the two businesses.
 
 - [Next.js](https://nextjs.org) (App Router) + TypeScript
 - Tailwind CSS
-- [Prisma](https://www.prisma.io) ORM — SQLite for local dev, swap to
-  Postgres/MySQL for production by changing the `provider` in
-  `prisma/schema.prisma` and pointing `DATABASE_URL` at your database
+- [Prisma](https://www.prisma.io) ORM on Postgres
 - [Auth.js / NextAuth v5](https://authjs.dev) — email/password
   (credentials) auth, one account per business
 - [Stripe Connect](https://stripe.com/connect) (Express accounts) for
@@ -61,10 +59,14 @@ shipping between the two businesses.
 
 ## Getting started
 
+You need a Postgres database (a free [Neon](https://neon.tech) or
+[Supabase](https://supabase.com) project works fine, or a local Postgres
+instance).
+
 ```bash
 npm install
-cp .env.example .env        # then fill in AUTH_SECRET and Stripe keys
-npx prisma migrate dev       # creates prisma/dev.db and applies the schema
+cp .env.example .env        # fill in DATABASE_URL, AUTH_SECRET, Stripe keys
+npx prisma migrate dev       # applies the schema to your database
 npm run db:seed              # creates an admin account + demo seller/buyer
 npm run dev
 ```
@@ -78,6 +80,20 @@ Seeded accounts (see `prisma/seed.ts`):
 | Buyer  | `buyer@overstocktrade.test`    | `buyer12345`  |
 
 The seed also creates one demo listing so `/listings` isn't empty.
+
+## Deploying to Vercel
+
+1. [vercel.com/new](https://vercel.com/new) → import this repo (branch
+   `claude/overstock-trade-marketplace-a56vt4`, or `main` once merged).
+2. Before deploying, open the project's **Storage** tab → **Create Database
+   → Postgres** (Neon-backed). This sets `DATABASE_URL` for you.
+3. Add the remaining environment variables (`AUTH_SECRET`,
+   `NEXT_PUBLIC_APP_URL` set to your deployment URL, and Stripe keys if you
+   want payments to work).
+4. Deploy. The build command (`prisma generate && prisma migrate deploy &&
+   next build`) applies the schema to your new database automatically —
+   run `npm run db:seed` once locally against that same `DATABASE_URL` if
+   you want the demo accounts on the live site too.
 
 ### Environment variables
 
@@ -117,5 +133,3 @@ only affects orders created afterward.
   wired up yet).
 - No email delivery — notifications are in-app only.
 - Buyer/seller negotiation supports one round of counter-offer.
-- SQLite is fine for development; use Postgres in production for
-  concurrent writes and case-insensitive search.

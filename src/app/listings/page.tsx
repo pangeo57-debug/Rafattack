@@ -24,8 +24,8 @@ export default async function BrowseListingsPage({
   const where: Prisma.ListingWhereInput = { status: "ACTIVE" };
   if (sp.q) {
     where.OR = [
-      { title: { contains: sp.q } },
-      { description: { contains: sp.q } },
+      { title: { contains: sp.q, mode: "insensitive" } },
+      { description: { contains: sp.q, mode: "insensitive" } },
     ];
   }
   if (sp.category) where.category = sp.category;
@@ -33,8 +33,8 @@ export default async function BrowseListingsPage({
     where.AND = [
       {
         OR: [
-          { locationCity: { contains: sp.location } },
-          { locationCountry: { contains: sp.location } },
+          { locationCity: { contains: sp.location, mode: "insensitive" } },
+          { locationCountry: { contains: sp.location, mode: "insensitive" } },
         ],
       },
     ];
