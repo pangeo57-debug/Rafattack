@@ -118,6 +118,48 @@ The commission percentage is read from the `PlatformSetting` table
 onto each `Transaction` at the moment an offer is accepted, so changing it
 only affects orders created afterward.
 
+## Shipping the iOS app (App Store)
+
+The app is wrapped as a native iOS shell with [Capacitor](https://capacitorjs.com),
+loading the deployed site (`server.url` in `capacitor.config.ts`) inside a
+real native app rather than bundling a static export — needed since this
+app has server-side API routes, auth, and a database.
+
+What's already done in this repo:
+
+- `capacitor.config.ts` + `ios/` Xcode project (App name, bundle ID
+  `com.overstocktrade.app`, brand-colored status bar & splash screen)
+- App icon and splash screen assets (`resources/icon.png`,
+  `resources/splash.png` → regenerate all sizes with
+  `npx capacitor-assets generate --ios` after changing them)
+- Privacy Policy, Terms of Service, in-app account deletion (Apple
+  Guideline 5.1.1v) — see `/privacy`, `/terms`, `/dashboard/account`
+- `store-assets/app-store-listing.md` — draft App Store Connect copy
+  (description, keywords, category, App Privacy answers, review notes)
+
+What you need to do (requires a Mac, or a cloud build service if you
+don't have one — e.g. [Codemagic](https://codemagic.io) or
+[Ionic Appflow](https://ionic.io/appflow) can build/sign an iOS app from
+this repo without a physical Mac):
+
+1. Deploy the app (see "Deploying to Vercel" above) and get its
+   production URL.
+2. Update `server.url` in `capacitor.config.ts` to that URL, and
+   `NEXT_PUBLIC_APP_URL` in your Vercel env vars to match.
+3. `npx cap sync ios`
+4. Enroll in the [Apple Developer Program](https://developer.apple.com/programs/) ($99/yr) if you haven't.
+5. `npx cap open ios` (opens Xcode) → set your Team under Signing &
+   Capabilities → Product → Archive → distribute to App Store Connect.
+   (Or point a cloud CI service at this repo if you don't have Xcode.)
+6. Create the app listing in [App Store Connect](https://appstoreconnect.apple.com)
+   using `store-assets/app-store-listing.md` as your starting copy, fill
+   in the Privacy Policy URL, upload screenshots, and submit for review —
+   the App Review notes in that file include working demo credentials.
+
+Fill in the `[BRACKETS]` in `/privacy` and `/terms` (legal entity name,
+address, support email, governing law) before submitting — Apple checks
+that these are real, not placeholders.
+
 ## Project structure
 
 - `prisma/schema.prisma` — data model (Business, User, Listing, Offer,
