@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Overstock Trade — B2B overstock marketplace",
+  title: "Surplo — B2B overstock marketplace",
   description:
     "Buy and sell excess and overstock inventory between businesses, with escrow-protected payments.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Overstock Trade",
+    title: "Surplo",
   },
   icons: {
     icon: [

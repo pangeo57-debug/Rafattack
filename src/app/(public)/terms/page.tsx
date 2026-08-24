@@ -1,4 +1,4 @@
-export const metadata = { title: "Terms of Service — Overstock Trade" };
+export const metadata = { title: "Terms of Service — Surplo" };
 
 export default function TermsPage() {
   return (
@@ -8,13 +8,13 @@ export default function TermsPage() {
 
       <p className="mt-6">
         These Terms of Service (&ldquo;Terms&rdquo;) govern your business&apos;s use of
-        Overstock Trade (the &ldquo;Service&rdquo;), operated by [LEGAL ENTITY NAME]
+        Surplo (the &ldquo;Service&rdquo;), operated by [LEGAL ENTITY NAME]
         (&ldquo;we&rdquo;, &ldquo;us&rdquo;). By creating an account you agree to these Terms.
       </p>
 
-      <h2 className="mt-8 text-lg font-semibold text-zinc-900">1. What Overstock Trade is</h2>
+      <h2 className="mt-8 text-lg font-semibold text-zinc-900">1. What Surplo is</h2>
       <p className="mt-2">
-        Overstock Trade is a business-to-business marketplace that lets
+        Surplo is a business-to-business marketplace that lets
         registered businesses list excess or overstock inventory for sale
         and lets other registered businesses browse, negotiate, and pay for
         that inventory. We are a marketplace and payment facilitator — we

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const link = `${appUrl}/reset-password?token=${token}`;
     await sendEmail(
       email,
-      "Reset your Overstock Trade password",
+      "Reset your Surplo password",
       emailShell(
         "Reset your password",
         `<p>We received a request to reset your password. This link expires in 1 hour.</p>

@@ -56,7 +56,7 @@ export async function POST(
           unit_amount: amountCents,
           product_data: {
             name: transaction.listing.title,
-            description: `${transaction.quantity} x unit — Overstock Trade order ${transaction.id}`,
+            description: `${transaction.quantity} x unit — Surplo order ${transaction.id}`,
           },
         },
         quantity: 1,

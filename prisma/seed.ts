@@ -10,7 +10,7 @@ async function main() {
     create: { id: "singleton", commissionPercent: 8 },
   });
 
-  const adminEmail = "admin@overstocktrade.test";
+  const adminEmail = "admin@surplo.test";
   const adminPasswordHash = await bcrypt.hash("admin12345", 10);
   await prisma.user.upsert({
     where: { email: adminEmail },
@@ -25,7 +25,7 @@ async function main() {
   });
   console.log(`Admin user ready: ${adminEmail} / admin12345`);
 
-  const sellerEmail = "seller@overstocktrade.test";
+  const sellerEmail = "seller@surplo.test";
   let seller = await prisma.user.findUnique({ where: { email: sellerEmail } });
   if (!seller) {
     const business = await prisma.business.create({
@@ -70,7 +70,7 @@ async function main() {
     console.log(`Demo seller ready: ${sellerEmail} / seller12345`);
   }
 
-  const buyerEmail = "buyer@overstocktrade.test";
+  const buyerEmail = "buyer@surplo.test";
   const buyer = await prisma.user.findUnique({ where: { email: buyerEmail } });
   if (!buyer) {
     const business = await prisma.business.create({

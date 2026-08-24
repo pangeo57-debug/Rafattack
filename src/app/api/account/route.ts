@@ -51,7 +51,7 @@ export async function DELETE() {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          email: `deleted-${user.id}@deleted.overstocktrade.invalid`,
+          email: `deleted-${user.id}@deleted.surplo.invalid`,
           name: "Deleted user",
           passwordHash: unusableHash,
         },
@@ -62,7 +62,7 @@ export async function DELETE() {
       where: { id: businessId },
       data: {
         name: "Deleted business",
-        contactEmail: `deleted-${businessId}@deleted.overstocktrade.invalid`,
+        contactEmail: `deleted-${businessId}@deleted.surplo.invalid`,
         contactPhone: null,
         address: null,
         taxId: `deleted-${businessId}`,

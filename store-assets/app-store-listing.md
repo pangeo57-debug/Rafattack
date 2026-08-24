@@ -5,9 +5,9 @@ Draft copy for the App Store Connect submission form. Everything in
 
 ## App information
 
-- **Name** (30 char max): `Overstock Trade`
+- **Name** (30 char max): `Surplo`
 - **Subtitle** (30 char max): `B2B Overstock Marketplace`
-- **Bundle ID**: `com.overstocktrade.app` (set in `capacitor.config.ts` — change
+- **Bundle ID**: `com.surplo.app` (set in `capacitor.config.ts` — change
   it if you want a different reverse-domain ID, then re-run `npx cap sync ios`)
 - **Primary category**: Business
 - **Secondary category**: Shopping
@@ -20,7 +20,7 @@ Draft copy for the App Store Connect submission form. Everything in
 
 ## Description (4000 char max)
 
-> Overstock Trade is the marketplace where retail businesses turn excess
+> Surplo is the marketplace where retail businesses turn excess
 > and overstock inventory into cash — and where resellers, outlet stores,
 > and liquidators find discounted bulk inventory to buy.
 >
@@ -85,11 +85,11 @@ codebase) and **no data sold**.
 
 ## App Review notes (paste into the "Notes" box on submission)
 
-> Overstock Trade is a B2B marketplace. Demo accounts for review:
+> Surplo is a B2B marketplace. Demo accounts for review:
 >
-> Admin: admin@overstocktrade.test / admin12345
-> Seller: seller@overstocktrade.test / seller12345 (has one active listing)
-> Buyer: buyer@overstocktrade.test / buyer12345
+> Admin: admin@surplo.test / admin12345
+> Seller: seller@surplo.test / seller12345 (has one active listing)
+> Buyer: buyer@surplo.test / buyer12345
 >
 > Suggested test flow: log in as buyer -> Browse -> open the seller's
 > listing -> "Send offer" -> log in as seller -> Dashboard -> Offers ->

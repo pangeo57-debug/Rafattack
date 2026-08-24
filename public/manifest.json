@@ -1,6 +1,6 @@
 {
-  "name": "Overstock Trade",
-  "short_name": "Overstock Trade",
+  "name": "Surplo",
+  "short_name": "Surplo",
   "description": "B2B marketplace for excess and overstock inventory, with escrow-protected payments.",
   "start_url": "/",
   "display": "standalone",

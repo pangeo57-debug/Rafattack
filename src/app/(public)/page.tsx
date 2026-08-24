@@ -57,7 +57,7 @@ export default async function Home() {
               into cash.
             </h1>
             <p className="mt-5 text-lg text-zinc-600">
-              Overstock Trade connects retailers with excess inventory to resellers,
+              Surplo connects retailers with excess inventory to resellers,
               outlets and liquidators who want it &mdash; with escrow-protected
               payments and a simple commission on every sale.
             </p>

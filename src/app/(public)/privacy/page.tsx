@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Privacy Policy — Overstock Trade" };
+export const metadata = { title: "Privacy Policy — Surplo" };
 
 export default function PrivacyPolicyPage() {
   return (
@@ -9,8 +9,8 @@ export default function PrivacyPolicyPage() {
       <p className="mt-1 text-zinc-500">Last updated: [DATE]</p>
 
       <p className="mt-6">
-        [LEGAL ENTITY NAME] (&ldquo;Overstock Trade&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) operates the
-        Overstock Trade marketplace (the &ldquo;Service&rdquo;), including the mobile app and
+        [LEGAL ENTITY NAME] (&ldquo;Surplo&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) operates the
+        Surplo marketplace (the &ldquo;Service&rdquo;), including the mobile app and
         website. This policy explains what information we collect, how we use
         it, and the choices you have. By creating an account you agree to
         this policy.
@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
 
       <h2 className="mt-8 text-lg font-semibold text-zinc-900">1. Who this applies to</h2>
       <p className="mt-2">
-        Overstock Trade is a business-to-business (B2B) service. Accounts are
+        Surplo is a business-to-business (B2B) service. Accounts are
         created on behalf of a business, not an individual consumer. The
         information below applies to the business and to the individual
         person(s) who register and use the account on the business&apos;s

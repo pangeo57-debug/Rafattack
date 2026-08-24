@@ -21,7 +21,7 @@ export default async function Nav() {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-white">
               <Package className="h-4 w-4" />
             </span>
-            Overstock<span className="text-brand">Trade</span>
+            Surp<span className="text-brand">lo</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-600 sm:flex">
             <Link href="/listings" className="transition-colors hover:text-zinc-900">

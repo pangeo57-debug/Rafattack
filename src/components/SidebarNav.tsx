@@ -123,7 +123,7 @@ function SidebarContent({
           <Package className="h-4.5 w-4.5" />
         </span>
         <span className="text-base font-semibold tracking-tight text-white">
-          Overstock<span className="text-brand">Trade</span>
+          Surp<span className="text-brand">lo</span>
         </span>
       </div>
 
@@ -219,7 +219,7 @@ export default function SidebarNav({
           <Menu className="h-5 w-5" />
         </button>
         <span className="text-sm font-semibold text-zinc-900">
-          Overstock<span className="text-brand">Trade</span>
+          Surp<span className="text-brand">lo</span>
         </span>
         <Link href="/dashboard/notifications" className="relative rounded-lg p-2 text-zinc-600 hover:bg-zinc-100">
           <Bell className="h-5 w-5" />

@@ -27,10 +27,10 @@ export async function POST() {
   const link = `${appUrl}/verify-email?token=${token}`;
   await sendEmail(
     user.email,
-    "Verify your email — Overstock Trade",
+    "Verify your email — Surplo",
     emailShell(
       "Verify your email",
-      `<p>Confirm your email address for Overstock Trade.</p>
+      `<p>Confirm your email address for Surplo.</p>
        <p><a href="${link}" style="color:#4f46e5;">Verify email</a></p>
        <p>This link expires in 24 hours.</p>`
     )

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Lock, Flag, RotateCcw } from "lucide-react";
 
-export const metadata = { title: "Trust, Safety & Refunds — Overstock Trade" };
+export const metadata = { title: "Trust, Safety & Refunds — Surplo" };
 
 export default function TrustSafetyPage() {
   return (
@@ -10,7 +10,7 @@ export default function TrustSafetyPage() {
       <p className="mt-1 text-zinc-500">Last updated: [DATE]</p>
 
       <p className="mt-6">
-        This page explains how Overstock Trade protects both sides of a trade, what
+        This page explains how Surplo protects both sides of a trade, what
         &ldquo;Verified&rdquo; means, and what happens if an order goes wrong &mdash; including how to
         report a scam and how refunds work. It supplements our{" "}
         <Link href="/terms" className="text-brand hover:underline">

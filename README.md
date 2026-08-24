@@ -1,4 +1,4 @@
-# Overstock Trade
+# Surplo
 
 A B2B marketplace where small and medium retail businesses sell excess and
 overstock inventory directly to other businesses — resellers, outlet
@@ -80,9 +80,9 @@ Seeded accounts (see `prisma/seed.ts`):
 
 | Role   | Email                          | Password      |
 | ------ | ------------------------------- | -------------- |
-| Admin  | `admin@overstocktrade.test`    | `admin12345`  |
-| Seller | `seller@overstocktrade.test`   | `seller12345` |
-| Buyer  | `buyer@overstocktrade.test`    | `buyer12345`  |
+| Admin  | `admin@surplo.test`    | `admin12345`  |
+| Seller | `seller@surplo.test`   | `seller12345` |
+| Buyer  | `buyer@surplo.test`    | `buyer12345`  |
 
 The seed also creates one demo listing so `/listings` isn't empty.
 
@@ -159,7 +159,7 @@ app has server-side API routes, auth, and a database.
 What's already done in this repo:
 
 - `capacitor.config.ts` + `ios/` Xcode project (App name, bundle ID
-  `com.overstocktrade.app`, brand-colored status bar & splash screen)
+  `com.surplo.app`, brand-colored status bar & splash screen)
 - App icon and splash screen assets (`resources/icon.png`,
   `resources/splash.png` → regenerate all sizes with
   `npx capacitor-assets generate --ios` after changing them)

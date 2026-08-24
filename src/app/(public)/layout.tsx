@@ -7,7 +7,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Nav />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-zinc-200 bg-white py-6 text-center text-sm text-zinc-500">
-        <p>Overstock Trade &mdash; a B2B marketplace for excess inventory.</p>
+        <p>Surplo &mdash; a B2B marketplace for excess inventory.</p>
         <p className="mt-2 flex justify-center gap-4">
           <Link href="/privacy" className="hover:text-zinc-700 hover:underline">
             Privacy Policy
