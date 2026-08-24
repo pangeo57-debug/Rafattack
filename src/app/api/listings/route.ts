@@ -55,6 +55,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const business = await prisma.business.findUnique({ where: { id: session.user.businessId } });
+  if (business?.verificationStatus === "SUSPENDED") {
+    return NextResponse.json({ error: "Your account is suspended and can't list inventory." }, { status: 403 });
+  }
+
   const json = await req.json();
   const parsed = listingSchema.safeParse(json);
   if (!parsed.success) {

@@ -34,6 +34,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const buyerBusiness = await prisma.business.findUnique({ where: { id: session.user.businessId } });
+  if (buyerBusiness?.verificationStatus === "SUSPENDED") {
+    return NextResponse.json({ error: "Your account is suspended and can't make offers." }, { status: 403 });
+  }
+
   const json = await req.json();
   const parsed = offerSchema.safeParse(json);
   if (!parsed.success) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, MapPin } from "lucide-react";
+import { Package, MapPin, BadgeCheck } from "lucide-react";
 import { ui, formatMoney } from "@/lib/ui";
 
 type ListingCardData = {
@@ -14,6 +14,7 @@ type ListingCardData = {
   quantityAvailable?: number;
   minOrderQty?: number;
   sellerBusinessName?: string;
+  sellerVerified?: boolean;
 };
 
 export default function ListingCard({ listing }: { listing: ListingCardData }) {
@@ -41,7 +42,10 @@ export default function ListingCard({ listing }: { listing: ListingCardData }) {
           {listing.title}
         </h3>
         {listing.sellerBusinessName && (
-          <p className="mt-1 truncate text-sm text-zinc-500">{listing.sellerBusinessName}</p>
+          <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-500">
+            <span className="truncate">{listing.sellerBusinessName}</span>
+            {listing.sellerVerified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />}
+          </p>
         )}
         <p className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
           <MapPin className="h-3 w-3" />

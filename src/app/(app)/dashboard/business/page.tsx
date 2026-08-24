@@ -40,8 +40,27 @@ export default async function BusinessProfilePage({
         </div>
         {business.verificationStatus === "PENDING" && (
           <p className="mt-2 text-sm text-zinc-500">
-            Our team reviews new businesses before you can complete a sale. This usually
-            takes 1&ndash;2 business days.
+            You can already list and trade while pending &mdash; buyers just see a
+            &ldquo;Not verified&rdquo; notice on your listings until our team reviews your
+            business details. Verified sellers tend to convert offers faster.{" "}
+            <Link href="/trust-safety" className="text-brand hover:underline">
+              What verification means
+            </Link>
+            .
+          </p>
+        )}
+        {business.verificationStatus === "REJECTED" && (
+          <p className="mt-2 text-sm text-zinc-500">
+            Your verification wasn&apos;t approved
+            {business.verificationNote ? `: ${business.verificationNote}` : "."} Update your
+            business details below and our team will take another look.
+          </p>
+        )}
+        {business.verificationStatus === "SUSPENDED" && (
+          <p className="mt-2 text-sm text-zinc-500">
+            Your account is suspended and can&apos;t list or complete purchases
+            {business.verificationNote ? `: ${business.verificationNote}` : "."} Contact
+            support if you believe this is a mistake.
           </p>
         )}
       </div>

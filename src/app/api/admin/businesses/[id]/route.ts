@@ -23,6 +23,21 @@ export async function PATCH(
     data: { verificationStatus, verificationNote },
   });
 
+  if (verificationStatus === "SUSPENDED") {
+    await prisma.listing.updateMany({
+      where: { sellerBusinessId: id, status: { in: ["ACTIVE", "PAUSED"] } },
+      data: { status: "REMOVED" },
+    });
+    await prisma.offer.updateMany({
+      where: { listing: { sellerBusinessId: id }, status: "PENDING" },
+      data: { status: "WITHDRAWN" },
+    });
+    await prisma.offer.updateMany({
+      where: { buyerBusinessId: id, status: { in: ["PENDING", "COUNTERED"] } },
+      data: { status: "WITHDRAWN" },
+    });
+  }
+
   await notify(
     business.id,
     "VERIFICATION_UPDATED",

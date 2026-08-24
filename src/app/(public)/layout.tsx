@@ -15,6 +15,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/terms" className="hover:text-zinc-700 hover:underline">
             Terms of Service
           </Link>
+          <Link href="/trust-safety" className="hover:text-zinc-700 hover:underline">
+            Trust, Safety &amp; Refunds
+          </Link>
         </p>
       </footer>
     </div>

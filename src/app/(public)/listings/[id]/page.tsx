@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
 import { LISTING_CONDITIONS, FULFILLMENT_TYPES } from "@/lib/constants";
 import OfferBox from "@/components/OfferBox";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 export default async function ListingDetailPage({
   params,
@@ -74,7 +76,10 @@ export default async function ListingDetailPage({
           </dl>
 
           <div className="mt-6 rounded-lg border border-zinc-200 bg-white p-4">
-            <p className="text-sm font-medium text-zinc-900">Seller</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-zinc-900">Seller</p>
+              <VerifiedBadge verified={listing.sellerBusiness.verificationStatus === "VERIFIED"} />
+            </div>
             <Link
               href={`/businesses/${listing.sellerBusiness.id}`}
               className="mt-1 block font-medium text-brand hover:underline"
@@ -104,6 +109,23 @@ export default async function ListingDetailPage({
           </p>
           {listing.originalPrice > listing.askingPrice && (
             <p className="text-sm text-zinc-400 line-through">{formatMoney(listing.originalPrice)}</p>
+          )}
+
+          {listing.sellerBusiness.verificationStatus === "VERIFIED" ? (
+            <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Verified seller &middot; your payment is held in escrow until you confirm receipt.
+            </p>
+          ) : (
+            <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              This seller hasn&apos;t completed business verification yet. Your payment is still
+              escrow-protected, but purchase at your own discretion.{" "}
+              <Link href="/trust-safety" className="underline">
+                Learn more
+              </Link>
+              .
+            </p>
           )}
 
           <div className="mt-4">

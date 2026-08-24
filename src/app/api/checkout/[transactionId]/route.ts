@@ -21,6 +21,10 @@ export async function POST(
   if (transaction.buyerBusinessId !== session.user.businessId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const buyerBusiness = await prisma.business.findUnique({ where: { id: session.user.businessId } });
+  if (buyerBusiness?.verificationStatus === "SUSPENDED") {
+    return NextResponse.json({ error: "Your account is suspended and can't complete purchases." }, { status: 403 });
+  }
   if (transaction.orderStatus !== "AWAITING_PAYMENT") {
     return NextResponse.json({ error: "This order has already been paid." }, { status: 400 });
   }

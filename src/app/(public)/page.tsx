@@ -121,6 +121,7 @@ export default async function Home() {
                   locationCity: l.locationCity,
                   locationCountry: l.locationCountry,
                   sellerBusinessName: l.sellerBusiness.name,
+                  sellerVerified: l.sellerBusiness.verificationStatus === "VERIFIED",
                 }}
               />
             ))}

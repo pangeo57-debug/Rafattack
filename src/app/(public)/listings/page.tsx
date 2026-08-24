@@ -127,6 +127,7 @@ export default async function BrowseListingsPage({
               quantityAvailable: l.quantityAvailable,
               minOrderQty: l.minOrderQty,
               sellerBusinessName: l.sellerBusiness.name,
+              sellerVerified: l.sellerBusiness.verificationStatus === "VERIFIED",
             }}
           />
         ))}

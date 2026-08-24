@@ -46,6 +46,13 @@ export async function PATCH(
     return NextResponse.json(updated);
   }
 
+  if (action === "ACCEPT" || action === "COUNTER") {
+    const myBusiness = await prisma.business.findUnique({ where: { id: businessId } });
+    if (myBusiness?.verificationStatus === "SUSPENDED") {
+      return NextResponse.json({ error: "Your account is suspended." }, { status: 403 });
+    }
+  }
+
   if (offer.status === "PENDING") {
     if (!isSeller) {
       return NextResponse.json({ error: "Only the seller can respond to a new offer." }, { status: 403 });
