@@ -23,7 +23,7 @@ export default function LoginPage() {
     });
     setLoading(false);
     if (res?.error) {
-      setError("Invalid email or password.");
+      setError("Invalid email or password, or your account is temporarily locked after too many attempts.");
       return;
     }
     router.push("/dashboard");
@@ -44,7 +44,12 @@ export default function LoginPage() {
           <input name="email" type="email" required className={ui.input} />
         </div>
         <div>
-          <label className={ui.label}>Password</label>
+          <div className="flex items-center justify-between">
+            <label className={ui.label}>Password</label>
+            <Link href="/forgot-password" className="mb-1 text-xs text-brand hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <input name="password" type="password" required className={ui.input} />
         </div>
         <button type="submit" disabled={loading} className={`${ui.btnPrimary} w-full`}>

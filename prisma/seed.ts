@@ -20,6 +20,7 @@ async function main() {
       name: "Platform Admin",
       passwordHash: adminPasswordHash,
       platformRole: "ADMIN",
+      emailVerified: new Date(),
     },
   });
   console.log(`Admin user ready: ${adminEmail} / admin12345`);
@@ -45,6 +46,7 @@ async function main() {
         name: "Sam Seller",
         passwordHash: await bcrypt.hash("seller12345", 10),
         businessId: business.id,
+        emailVerified: new Date(),
       },
     });
     await prisma.listing.create({
@@ -89,6 +91,7 @@ async function main() {
         name: "Bailey Buyer",
         passwordHash: await bcrypt.hash("buyer12345", 10),
         businessId: business.id,
+        emailVerified: new Date(),
       },
     });
     console.log(`Demo buyer ready: ${buyerEmail} / buyer12345`);

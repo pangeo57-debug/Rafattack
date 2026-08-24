@@ -3,6 +3,9 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
@@ -24,8 +27,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
         if (!user) return null;
 
+        if (user.lockedUntil && user.lockedUntil > new Date()) {
+          return null;
+        }
+
         const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          const attempts = user.failedLoginAttempts + 1;
+          await prisma.user.update({
+            where: { id: user.id },
+            data:
+              attempts >= MAX_FAILED_ATTEMPTS
+                ? {
+                    failedLoginAttempts: 0,
+                    lockedUntil: new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000),
+                  }
+                : { failedLoginAttempts: attempts },
+          });
+          return null;
+        }
+
+        if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { failedLoginAttempts: 0, lockedUntil: null },
+          });
+        }
 
         if (user.business?.deletedAt) return null;
 

@@ -119,6 +119,28 @@ listens for `checkout.session.completed`, `checkout.session.async_payment_succee
 and `checkout.session.async_payment_failed` — add all three to the
 webhook endpoint in the Stripe Dashboard for production.
 
+### Account security
+
+- **Email verification** — signup sends a verification link (24h expiry).
+  Unverified accounts can still use the app (a dashboard banner nags them
+  to verify / resend), matching common practice rather than hard-blocking.
+- **Password reset** — `/forgot-password` → emailed link (1h expiry) →
+  `/reset-password`. The forgot-password endpoint always responds the same
+  way whether or not the email is registered, so it can't be used to check
+  which emails have accounts.
+- **Login lockout** — 5 failed password attempts locks that account for 15
+  minutes (tracked on the `User` row, not per-IP, so it can't be dodged by
+  changing networks).
+- **Rate limiting** — signup and password-reset requests are throttled by
+  IP (and email, for reset requests) using a small Postgres-backed fixed
+  window limiter (`RateLimitAttempt` table) — no Redis/external service
+  needed.
+
+Without `RESEND_API_KEY` set, verification/reset emails are logged to the
+server console instead of sent — enough to test the flow locally, but set
+a real key before going to production or nobody can actually verify or
+reset their password.
+
 ### Commission
 
 The commission percentage is read from the `PlatformSetting` table
@@ -172,7 +194,8 @@ that these are real, not placeholders.
 ## Project structure
 
 - `prisma/schema.prisma` — data model (Business, User, Listing, Offer,
-  Transaction, Review, SavedSearch, Notification, PlatformSetting)
+  Transaction, Review, SavedSearch, Notification, PlatformSetting,
+  VerificationToken, RateLimitAttempt)
 - `src/app` — pages and API routes (Next.js App Router)
 - `src/components` — client components (forms, action buttons)
 - `src/lib` — Prisma client, auth/session helpers, Stripe client,
@@ -182,5 +205,6 @@ that these are real, not placeholders.
 
 - Photos are pasted image URLs, not uploaded files (no object storage
   wired up yet).
-- No email delivery — notifications are in-app only.
+- Only account emails (verify/reset) are sent — offer/payment/order
+  notifications are in-app only, no email digest yet.
 - Buyer/seller negotiation supports one round of counter-offer.

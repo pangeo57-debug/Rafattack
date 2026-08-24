@@ -3,14 +3,18 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import SidebarNav from "@/components/SidebarNav";
 import PageTransition from "@/components/PageTransition";
+import ResendVerificationBanner from "@/components/ResendVerificationBanner";
 
 export default async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const business = session.user.businessId
-    ? await prisma.business.findUnique({ where: { id: session.user.businessId } })
-    : null;
+  const [business, user] = await Promise.all([
+    session.user.businessId
+      ? prisma.business.findUnique({ where: { id: session.user.businessId } })
+      : Promise.resolve(null),
+    prisma.user.findUnique({ where: { id: session.user.id } }),
+  ]);
 
   const unreadCount = session.user.businessId
     ? await prisma.notification.count({
@@ -27,6 +31,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
         unreadCount={unreadCount}
       />
       <div className="lg:pl-64">
+        {user && !user.emailVerified && <ResendVerificationBanner />}
         <PageTransition>{children}</PageTransition>
       </div>
     </div>
