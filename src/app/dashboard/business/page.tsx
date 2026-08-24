@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
@@ -64,6 +65,12 @@ export default async function BusinessProfilePage({
       <div className={`${ui.card} mt-6 p-6`}>
         <BusinessForm business={business} />
       </div>
+
+      <p className="mt-4 text-sm text-slate-500">
+        <Link href="/dashboard/account" className="text-indigo-600 hover:underline">
+          Account settings &amp; delete account
+        </Link>
+      </p>
     </div>
   );
 }

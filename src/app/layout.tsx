@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Providers from "@/components/Providers";
@@ -18,6 +19,23 @@ export const metadata: Metadata = {
   title: "Overstock Trade — B2B overstock marketplace",
   description:
     "Buy and sell excess and overstock inventory between businesses, with escrow-protected payments.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Overstock Trade",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -31,7 +49,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Nav />
           <main className="flex-1">{children}</main>
           <footer className="border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500">
-            Overstock Trade &mdash; a B2B marketplace for excess inventory.
+            <p>Overstock Trade &mdash; a B2B marketplace for excess inventory.</p>
+            <p className="mt-2 flex justify-center gap-4">
+              <Link href="/privacy" className="hover:text-slate-700 hover:underline">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-slate-700 hover:underline">
+                Terms of Service
+              </Link>
+            </p>
           </footer>
         </Providers>
       </body>

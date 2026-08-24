@@ -131,6 +131,21 @@ export default function SignupPage() {
           </div>
         </fieldset>
 
+        <label className="flex items-start gap-2 text-sm text-slate-600">
+          <input type="checkbox" name="acceptedTerms" required className="mt-0.5" />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" className="text-indigo-600 hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="text-indigo-600 hover:underline">
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+
         <button type="submit" disabled={loading} className={`${ui.btnPrimary} w-full`}>
           {loading ? "Creating account..." : "Create account"}
         </button>

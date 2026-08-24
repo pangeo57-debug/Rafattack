@@ -19,6 +19,9 @@ export const signupSchema = z.object({
   address: z.string().optional(),
   taxId: z.string().min(2, "Tax/VAT ID is required"),
   contactPhone: z.string().optional(),
+  acceptedTerms: z.literal("on", {
+    message: "You must accept the Terms of Service and Privacy Policy.",
+  }),
 });
 
 export const listingSchema = z.object({

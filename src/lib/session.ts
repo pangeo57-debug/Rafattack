@@ -14,7 +14,7 @@ export async function requireBusiness() {
   const business = await prisma.business.findUnique({
     where: { id: user.businessId },
   });
-  if (!business) redirect("/onboarding");
+  if (!business || business.deletedAt) redirect("/login");
   return { user, business };
 }
 
