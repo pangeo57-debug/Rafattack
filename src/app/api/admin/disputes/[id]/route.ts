@@ -18,7 +18,10 @@ export async function PATCH(
     return NextResponse.json({ error: "resolution must be SELLER or BUYER" }, { status: 400 });
   }
 
-  const transaction = await prisma.transaction.findUnique({ where: { id } });
+  const transaction = await prisma.transaction.findUnique({
+    where: { id },
+    include: { sellerBusiness: true },
+  });
   if (!transaction) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (transaction.orderStatus !== "DISPUTED") {
     return NextResponse.json({ error: "This order is not under dispute." }, { status: 400 });
@@ -27,8 +30,14 @@ export async function PATCH(
   const stripe = requireStripe();
 
   if (resolution === "SELLER") {
-    if (transaction.stripePaymentIntentId) {
-      await stripe.paymentIntents.capture(transaction.stripePaymentIntentId);
+    if (transaction.sellerBusiness.stripeAccountId) {
+      await stripe.transfers.create({
+        amount: Math.round(transaction.sellerPayoutAmount * 100),
+        currency: "eur",
+        destination: transaction.sellerBusiness.stripeAccountId,
+        transfer_group: transaction.id,
+        metadata: { transactionId: transaction.id },
+      });
     }
     const updated = await prisma.transaction.update({
       where: { id },
@@ -47,7 +56,7 @@ export async function PATCH(
   }
 
   if (transaction.stripePaymentIntentId) {
-    await stripe.paymentIntents.cancel(transaction.stripePaymentIntentId);
+    await stripe.refunds.create({ payment_intent: transaction.stripePaymentIntentId });
   }
   const updated = await prisma.transaction.update({
     where: { id },

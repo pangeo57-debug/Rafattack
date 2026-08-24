@@ -38,15 +38,21 @@ export async function POST(
   const stripe = requireStripe();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const amountCents = Math.round(transaction.amount * 100);
-  const commissionCents = Math.round(transaction.commissionAmount * 100);
 
+  // Payment is collected into the platform's own Stripe balance (not a Connect
+  // destination charge) so that every payment method — card/Apple Pay/Google
+  // Pay, PayPal, SEPA bank transfer — can fund escrow the same way, including
+  // asynchronous methods that don't support authorize-then-capture. The
+  // seller is paid via a separate Transfer once the buyer confirms receipt
+  // (see /api/transactions/[id] "COMPLETE") or a dispute is resolved in
+  // their favor — see /api/admin/disputes/[id].
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types: ["card"],
+    payment_method_types: ["card", "paypal", "sepa_debit"],
     line_items: [
       {
         price_data: {
-          currency: "usd",
+          currency: "eur",
           unit_amount: amountCents,
           product_data: {
             name: transaction.listing.title,
@@ -57,9 +63,7 @@ export async function POST(
       },
     ],
     payment_intent_data: {
-      capture_method: "manual",
-      application_fee_amount: commissionCents,
-      transfer_data: { destination: transaction.sellerBusiness.stripeAccountId },
+      transfer_group: transaction.id,
       metadata: { transactionId: transaction.id },
     },
     metadata: { transactionId: transaction.id },

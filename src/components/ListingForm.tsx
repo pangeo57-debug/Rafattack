@@ -124,7 +124,7 @@ export default function ListingForm({ listing }: { listing?: Listing }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={ui.label}>Original price (per unit, USD)</label>
+          <label className={ui.label}>Original price (per unit, EUR)</label>
           <input
             name="originalPrice"
             type="number"
@@ -136,7 +136,7 @@ export default function ListingForm({ listing }: { listing?: Listing }) {
           />
         </div>
         <div>
-          <label className={ui.label}>Asking price (per unit, USD)</label>
+          <label className={ui.label}>Asking price (per unit, EUR)</label>
           <input
             name="askingPrice"
             type="number"

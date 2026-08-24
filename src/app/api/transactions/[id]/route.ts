@@ -23,7 +23,7 @@ export async function PATCH(
 
   const transaction = await prisma.transaction.findUnique({
     where: { id },
-    include: { listing: true },
+    include: { listing: true, sellerBusiness: true },
   });
   if (!transaction) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -78,9 +78,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
     }
 
-    if (transaction.stripePaymentIntentId) {
+    if (transaction.sellerBusiness.stripeAccountId) {
       const stripe = requireStripe();
-      await stripe.paymentIntents.capture(transaction.stripePaymentIntentId);
+      await stripe.transfers.create({
+        amount: Math.round(transaction.sellerPayoutAmount * 100),
+        currency: "eur",
+        destination: transaction.sellerBusiness.stripeAccountId,
+        transfer_group: transaction.id,
+        metadata: { transactionId: transaction.id },
+      });
     }
 
     const updated = await prisma.transaction.update({

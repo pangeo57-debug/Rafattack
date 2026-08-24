@@ -19,8 +19,10 @@ shipping between the two businesses.
 - [Auth.js / NextAuth v5](https://authjs.dev) — email/password
   (credentials) auth, one account per business
 - [Stripe Connect](https://stripe.com/connect) (Express accounts) for
-  seller payouts, plus Stripe Checkout with **manual-capture** payment
-  intents to hold funds in escrow until the buyer confirms receipt
+  seller payouts, plus Stripe Checkout (card/Apple Pay/Google Pay, PayPal,
+  SEPA bank transfer) with a **separate-charges-and-transfers** escrow
+  model — money lands in the platform's own Stripe balance first, and is
+  only transferred to the seller once the buyer confirms receipt
 
 ## Core features
 
@@ -36,14 +38,17 @@ shipping between the two businesses.
 - **Offers & negotiation** — buy now at the asking price, or send an
   offer; the seller can accept, reject, or counter; the buyer can accept
   or reject a counter, or withdraw a pending offer.
-- **Escrow-style payments** — accepting an offer creates an order. The
-  buyer pays via Stripe Checkout with a manually-captured PaymentIntent
-  (funds authorized, not yet transferred). The platform's commission is
-  taken as a Stripe `application_fee_amount` and the remainder routed to
-  the seller's connected account via `transfer_data` — both happen
-  automatically the moment the PaymentIntent is captured, which happens
-  when the buyer confirms receipt (or an admin resolves a dispute in the
-  seller's favor).
+- **Escrow-style payments, multiple payment methods** — accepting an offer
+  creates an order. The buyer pays via Stripe Checkout, choosing card
+  (Apple Pay/Google Pay work automatically), PayPal, or a SEPA bank
+  transfer from an IBAN. Unlike a Connect destination charge, the payment
+  is *not* split at checkout — it settles into the platform's own Stripe
+  balance, which is what lets asynchronous methods like SEPA (which can
+  take up to ~14 business days just to confirm) participate in escrow the
+  same way an instant card payment does. The seller's share is only paid
+  out via a separate Stripe Transfer once the buyer confirms receipt (or
+  an admin resolves a dispute in the seller's favor); the platform's
+  commission is simply the difference never transferred out.
 - **Order tracking** — `AWAITING_PAYMENT → PAID → SHIPPED/PICKED_UP →
   COMPLETED`, with a full history per business and admin visibility into
   every transaction.
@@ -99,16 +104,20 @@ The seed also creates one demo listing so `/listings` isn't empty.
 
 See `.env.example`. At minimum for local dev without payments you only
 need `DATABASE_URL` and `AUTH_SECRET`. To exercise the checkout flow you
-need a Stripe test-mode secret key, and a seller business that has
-completed Stripe Connect onboarding (`/dashboard/business` → "Connect
-Stripe"). To receive the `checkout.session.completed` webhook locally,
+need a Stripe test-mode secret key, PayPal and SEPA Direct Debit enabled
+on that Stripe account (Dashboard → Settings → Payment methods), and a
+seller business that has completed Stripe Connect onboarding
+(`/dashboard/business` → "Connect Stripe"). To receive webhooks locally,
 run:
 
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-and put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`.
+and put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`. The app
+listens for `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+and `checkout.session.async_payment_failed` — add all three to the
+webhook endpoint in the Stripe Dashboard for production.
 
 ### Commission
 
