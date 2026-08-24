@@ -42,7 +42,7 @@ export default function CommissionSettingForm({ current }: { current: number }) 
         onChange={(e) => setValue(Number(e.target.value))}
         className={ui.input}
       />
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-zinc-500">
         Applied to new offers accepted after this change. Existing orders keep their original rate.
       </p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

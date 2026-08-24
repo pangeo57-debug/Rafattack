@@ -42,7 +42,7 @@ export default function ReviewForm({
 
   return (
     <div className={`${ui.card} p-4`}>
-      <p className="text-sm font-medium text-slate-900">Rate {revieweeName}</p>
+      <p className="text-sm font-medium text-zinc-900">Rate {revieweeName}</p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       <div className="mt-2 flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
@@ -50,7 +50,7 @@ export default function ReviewForm({
             key={n}
             type="button"
             onClick={() => setRating(n)}
-            className={`text-2xl ${n <= rating ? "text-amber-500" : "text-slate-300"}`}
+            className={`text-2xl ${n <= rating ? "text-amber-500" : "text-zinc-300"}`}
             aria-label={`${n} stars`}
           >
             ★

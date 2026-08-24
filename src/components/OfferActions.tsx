@@ -48,7 +48,7 @@ export default function OfferActions({
         {countering ? (
           <div className="flex flex-wrap items-end gap-2">
             <div>
-              <label className="block text-xs text-slate-500">Counter price</label>
+              <label className="block text-xs text-zinc-500">Counter price</label>
               <input
                 type="number"
                 step="0.01"
@@ -58,7 +58,7 @@ export default function OfferActions({
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500">Counter qty</label>
+              <label className="block text-xs text-zinc-500">Counter qty</label>
               <input
                 type="number"
                 value={counterQuantity}

@@ -18,7 +18,7 @@ export default function MarkAllReadButton() {
     <button
       onClick={markAllRead}
       disabled={loading}
-      className="text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50"
+      className="text-sm font-medium text-brand hover:underline disabled:opacity-50"
     >
       Mark all as read
     </button>

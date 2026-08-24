@@ -92,7 +92,7 @@ export default function OrderActions({
           {disputing ? (
             <div className="flex flex-wrap items-end gap-2">
               <div className="flex-1">
-                <label className="block text-xs text-slate-500">Reason for dispute</label>
+                <label className="block text-xs text-zinc-500">Reason for dispute</label>
                 <input
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}

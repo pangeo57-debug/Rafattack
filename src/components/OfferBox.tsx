@@ -85,8 +85,8 @@ export default function OfferBox({
           className={ui.input}
         />
       </div>
-      <p className="mt-3 text-sm text-slate-500">
-        Offer total: <span className="font-medium text-slate-900">{formatMoney(total || 0)}</span>
+      <p className="mt-3 text-sm text-zinc-500">
+        Offer total: <span className="font-medium text-zinc-900">{formatMoney(total || 0)}</span>
       </p>
       <div className="mt-4 flex flex-col gap-2">
         <button

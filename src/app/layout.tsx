@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
-import Nav from "@/components/Nav";
 import Providers from "@/components/Providers";
 import CapacitorBridge from "@/components/CapacitorBridge";
 
@@ -45,22 +43,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+      <body className="min-h-full bg-zinc-50 text-zinc-900">
         <Providers>
           <CapacitorBridge />
-          <Nav />
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500">
-            <p>Overstock Trade &mdash; a B2B marketplace for excess inventory.</p>
-            <p className="mt-2 flex justify-center gap-4">
-              <Link href="/privacy" className="hover:text-slate-700 hover:underline">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="hover:text-slate-700 hover:underline">
-                Terms of Service
-              </Link>
-            </p>
-          </footer>
+          {children}
         </Providers>
       </body>
     </html>

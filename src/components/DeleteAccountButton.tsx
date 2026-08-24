@@ -34,7 +34,7 @@ export default function DeleteAccountButton({ businessName }: { businessName: st
   return (
     <div className="space-y-3">
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <p className="text-sm text-slate-700">
+      <p className="text-sm text-zinc-700">
         Type <strong>{businessName}</strong> to confirm. This permanently removes your
         listings, closes your account, and cannot be undone.
       </p>

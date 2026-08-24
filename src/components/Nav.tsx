@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Bell, LayoutDashboard, Plus, Package } from "lucide-react";
 import { auth } from "@/auth";
 import SignOutButton from "@/components/SignOutButton";
 import { prisma } from "@/lib/prisma";
@@ -13,66 +14,60 @@ export default async function Nav() {
   }
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-slate-900">
-            Overstock<span className="text-indigo-600">Trade</span>
+          <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-900">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-white">
+              <Package className="h-4 w-4" />
+            </span>
+            Overstock<span className="text-brand">Trade</span>
           </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 sm:flex">
-            <Link href="/listings" className="hover:text-slate-900">
+          <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-600 sm:flex">
+            <Link href="/listings" className="transition-colors hover:text-zinc-900">
               Browse
             </Link>
-            {session?.user && (
-              <>
-                <Link href="/dashboard" className="hover:text-slate-900">
-                  Dashboard
-                </Link>
-                <Link href="/dashboard/offers" className="hover:text-slate-900">
-                  Offers
-                </Link>
-                <Link href="/dashboard/orders" className="hover:text-slate-900">
-                  Orders
-                </Link>
-              </>
-            )}
-            {session?.user?.platformRole === "ADMIN" && (
-              <Link href="/admin" className="hover:text-slate-900">
-                Admin
-              </Link>
-            )}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {session?.user ? (
             <>
               <Link
                 href="/dashboard/notifications"
-                className="relative text-sm font-medium text-slate-600 hover:text-slate-900"
+                className="relative rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                aria-label="Notifications"
               >
-                Notifications
+                <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold text-white">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white ring-2 ring-white">
                     {unreadCount}
                   </span>
                 )}
               </Link>
               <Link
                 href="/listings/new"
-                className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+                className="hidden items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-brand-hover active:scale-[0.98] sm:inline-flex"
               >
-                + List inventory
+                <Plus className="h-4 w-4" />
+                List inventory
+              </Link>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 active:scale-[0.98]"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
               </Link>
               <SignOutButton />
             </>
           ) : (
             <>
-              <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              <Link href="/login" className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900">
                 Log in
               </Link>
               <Link
                 href="/signup"
-                className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+                className="rounded-lg bg-brand px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-brand-hover active:scale-[0.98]"
               >
                 Sign up
               </Link>
