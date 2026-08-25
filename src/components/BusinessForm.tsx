@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import { ui } from "@/lib/ui";
 import { BUSINESS_TYPES, LISTING_CATEGORIES } from "@/lib/constants";
 import type { Business } from "@prisma/client";
+import PhotoUpload from "@/components/PhotoUpload";
 
 export default function BusinessForm({ business }: { business: Business }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [documents, setDocuments] = useState<string[]>(
+    JSON.parse(business.verificationDocuments || "[]")
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -18,7 +22,7 @@ export default function BusinessForm({ business }: { business: Business }) {
     setSaved(false);
     setLoading(true);
     const form = new FormData(e.currentTarget);
-    const body = Object.fromEntries(form.entries());
+    const body = { ...Object.fromEntries(form.entries()), verificationDocuments: documents };
     const res = await fetch("/api/business", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -94,6 +98,15 @@ export default function BusinessForm({ business }: { business: Business }) {
         <label className={ui.label}>Contact email</label>
         <input name="contactEmail" type="email" defaultValue={business.contactEmail} required className={ui.input} />
       </div>
+
+      <PhotoUpload
+        value={documents}
+        onChange={setDocuments}
+        max={2}
+        label="Verification documents"
+        hint="A photo of your business registration certificate or the ID of the account owner — reviewed by our team before your business is verified. Never shown publicly."
+      />
+
       <button type="submit" disabled={loading} className={ui.btnPrimary}>
         {loading ? "Saving..." : "Save changes"}
       </button>

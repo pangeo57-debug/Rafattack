@@ -28,11 +28,14 @@ shipping between the two businesses.
 
 - **Business signup & verification** — company name, type (retailer,
   reseller, outlet, liquidator, wholesaler), category, location, tax/VAT
-  ID, contact info. New businesses start `PENDING` until an admin verifies
-  them.
-- **Inventory listings** — title, description, category, photos (URLs),
-  quantity, unit of sale (per item / per lot), condition, original vs.
-  asking price, minimum order quantity, pickup/shipping/both, expiry date.
+  ID, contact info, plus verification document photos (business
+  registration certificate or the account owner's ID) uploaded from
+  Business Profile. New businesses start `PENDING` until an admin reviews
+  those documents and verifies them.
+- **Inventory listings** — title, description, category, photos (taken
+  with the camera or picked from the library), quantity, unit of sale (per
+  item / per lot), condition, original vs. asking price, minimum order
+  quantity, pickup/shipping/both, expiry date.
 - **Browse & search** — filter by keyword, category, location, price
   range, quantity, and seller business type.
 - **Offers & negotiation** — buy now at the asking price, or send an
@@ -201,10 +204,26 @@ that these are real, not placeholders.
 - `src/lib` — Prisma client, auth/session helpers, Stripe client,
   commission math, notifications, zod validators
 
+### Photo & camera uploads
+
+Listing photos and business verification documents are captured with the
+device camera or picked from the photo library — on the native iOS app via
+`@capacitor/camera` (a real permission prompt, configured with
+`NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription` in
+`Info.plist`), and on the web via a file input with the camera hinted
+through the `capture` attribute. Photos are resized and JPEG-compressed
+client-side, then stored as base64 data URIs directly on the `Listing` and
+`Business` rows — simple and needs no object-storage account, but not
+meant to scale past a few images per record (see limitations below).
+Verification documents are never shown publicly — only to admins on
+`/admin/businesses`, for review before approving a business.
+
 ## Known v1 limitations
 
-- Photos are pasted image URLs, not uploaded files (no object storage
-  wired up yet).
+- Photos are stored as base64 in Postgres, not in object storage (S3,
+  Vercel Blob, etc.) — fine for a v1 with a handful of compressed photos
+  per listing/business, but should move to real object storage before
+  scaling up photo volume.
 - Only account emails (verify/reset) are sent — offer/payment/order
   notifications are in-app only, no email digest yet.
 - Buyer/seller negotiation supports one round of counter-offer.

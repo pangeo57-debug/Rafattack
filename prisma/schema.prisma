@@ -118,8 +118,9 @@ model Business {
   taxId              String
   contactEmail       String
   contactPhone       String?
-  verificationStatus VerificationStatus @default(PENDING)
-  verificationNote   String?
+  verificationStatus    VerificationStatus @default(PENDING)
+  verificationNote      String?
+  verificationDocuments String             @default("[]") // JSON-encoded array of base64 document photos
 
   stripeAccountId String?
   stripeOnboarded Boolean @default(false)

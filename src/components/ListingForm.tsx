@@ -10,12 +10,13 @@ import {
   FULFILLMENT_TYPES,
 } from "@/lib/constants";
 import type { Listing } from "@prisma/client";
+import PhotoUpload from "@/components/PhotoUpload";
 
 export default function ListingForm({ listing }: { listing?: Listing }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const existingPhotos: string[] = listing ? JSON.parse(listing.photos || "[]") : [];
+  const [photos, setPhotos] = useState<string[]>(listing ? JSON.parse(listing.photos || "[]") : []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,10 +24,6 @@ export default function ListingForm({ listing }: { listing?: Listing }) {
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const raw = Object.fromEntries(form.entries()) as Record<string, string>;
-    const photos = (raw.photos || "")
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
 
     const body = { ...raw, photos, expiresAt: raw.expiresAt || null };
 
@@ -180,16 +177,13 @@ export default function ListingForm({ listing }: { listing?: Listing }) {
         />
       </div>
 
-      <div>
-        <label className={ui.label}>Photo URLs (one per line, optional)</label>
-        <textarea
-          name="photos"
-          defaultValue={existingPhotos.join("\n")}
-          rows={3}
-          placeholder="https://example.com/photo1.jpg"
-          className={ui.input}
-        />
-      </div>
+      <PhotoUpload
+        value={photos}
+        onChange={setPhotos}
+        max={6}
+        label="Photos (optional)"
+        hint="Take a photo or choose from your library — up to 6."
+      />
 
       <button type="submit" disabled={loading} className={ui.btnPrimary}>
         {loading ? "Saving..." : listing ? "Save changes" : "Publish listing"}

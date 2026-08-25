@@ -24,6 +24,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Surplo uses your camera to take photos for inventory listings and business verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Surplo uses your photo library to attach photos to listings and business verification.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Surplo saves photos you capture to your photo library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

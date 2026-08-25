@@ -28,7 +28,7 @@ export const listingSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
   category: z.string().min(1),
-  photos: z.array(z.string()).default([]),
+  photos: z.array(z.string().max(3_000_000)).max(6).default([]),
   quantityAvailable: z.coerce.number().int().positive(),
   unit: z.enum(["ITEM", "LOT"]),
   condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR", "CUSTOMER_RETURNS"]),

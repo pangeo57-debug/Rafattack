@@ -24,6 +24,13 @@ export async function PATCH(req: NextRequest) {
     if (typeof body[key] === "string") data[key] = body[key];
   }
 
+  if (Array.isArray(body.verificationDocuments)) {
+    const documents = body.verificationDocuments
+      .filter((d: unknown): d is string => typeof d === "string" && d.length <= 3_000_000)
+      .slice(0, 2);
+    data.verificationDocuments = JSON.stringify(documents);
+  }
+
   const business = await prisma.business.update({
     where: { id: session.user.businessId },
     data: data as never,
