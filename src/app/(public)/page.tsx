@@ -50,15 +50,16 @@ export default async function Home() {
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
           <div className="max-w-2xl animate-in">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
-              B2B overstock marketplace
+              Overstock marketplace for small businesses
             </span>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-zinc-900 sm:text-6xl">
               Turn overstock <br className="hidden sm:block" />
               into cash.
             </h1>
             <p className="mt-5 text-lg text-zinc-600">
-              Surplo connects retailers with excess inventory to resellers,
-              outlets and liquidators who want it &mdash; with escrow-protected
+              Surplo connects small and independent retailers with excess
+              inventory to small resellers, boutiques and outlets who want
+              it &mdash; no truckload minimums, just escrow-protected
               payments and a simple commission on every sale.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">

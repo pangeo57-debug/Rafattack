@@ -1,7 +1,7 @@
 {
   "name": "Surplo",
   "short_name": "Surplo",
-  "description": "B2B marketplace for excess and overstock inventory, with escrow-protected payments.",
+  "description": "Overstock marketplace for small businesses, with escrow-protected payments and no truckload minimums.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

@@ -1,10 +1,10 @@
 # Surplo
 
-A B2B marketplace where small and medium retail businesses sell excess and
-overstock inventory directly to other businesses — resellers, outlet
-stores, liquidators, other retailers — for real, cash-based payment.
-The platform takes a configurable percentage commission on every
-completed sale.
+A B2B marketplace built for small businesses — where small and independent
+retailers sell excess and overstock inventory directly to other small
+businesses (resellers, boutiques, outlet stores) for real, cash-based
+payment, without truckload minimums. The platform takes a configurable
+percentage commission on every completed sale.
 
 This is a v1 focused on the core loop: **sign up → list inventory → browse
 & offer → pay into escrow → confirm receipt → payout & review.** Shipping

@@ -6,7 +6,7 @@ Draft copy for the App Store Connect submission form. Everything in
 ## App information
 
 - **Name** (30 char max): `Surplo`
-- **Subtitle** (30 char max): `B2B Overstock Marketplace`
+- **Subtitle** (30 char max): `Overstock for Small Business`
 - **Bundle ID**: `com.surplo.app` (set in `capacitor.config.ts` — change
   it if you want a different reverse-domain ID, then re-run `npx cap sync ios`)
 - **Primary category**: Business
@@ -15,26 +15,28 @@ Draft copy for the App Store Connect submission form. Everything in
 
 ## Promotional text (170 chars, editable without a new review)
 
-> List excess inventory, get offers from verified resellers and outlets,
-> and get paid safely with escrow-protected payments.
+> Built for small businesses, not truckload liquidators. List excess
+> inventory, get offers from verified small buyers, and get paid safely
+> with escrow.
 
 ## Description (4000 char max)
 
-> Surplo is the marketplace where retail businesses turn excess
-> and overstock inventory into cash — and where resellers, outlet stores,
-> and liquidators find discounted bulk inventory to buy.
+> Surplo is the marketplace where small and independent retail
+> businesses turn excess and overstock inventory into cash — and where
+> other small resellers, boutiques, and outlets find discounted
+> inventory to buy, without needing to commit to a truckload.
 >
 > **For sellers**
 > List your overstock, past-season, or returned inventory in minutes.
-> Set your asking price, minimum order quantity, and whether buyers can
-> pick up or you'll ship. Accept offers instantly or negotiate a
-> counter-offer.
+> Set your asking price, minimum order quantity (as low as a single
+> unit), and whether buyers can pick up or you'll ship. Accept offers
+> instantly or negotiate a counter-offer.
 >
 > **For buyers**
-> Browse active listings by category, location, price, and quantity.
-> Buy at the listed price or send an offer. Every seller has a public
-> profile with reviews from past buyers, so you know who you're dealing
-> with.
+> Browse active listings by category, location, price, and quantity —
+> sized for small businesses, not bulk liquidators. Buy at the listed
+> price or send an offer. Every seller has a public profile with reviews
+> from past buyers, so you know who you're dealing with.
 >
 > **Escrow-protected payments**
 > When a sale is agreed, payment is collected securely and held until you
@@ -51,7 +53,7 @@ Draft copy for the App Store Connect submission form. Everything in
 ## Keywords (100 char max, comma-separated)
 
 ```
-b2b,wholesale,liquidation,overstock,marketplace,resell,inventory,closeout,bulk,outlet
+b2b,wholesale,liquidation,overstock,marketplace,resell,inventory,closeout,bulk,outlet,smallbusiness
 ```
 
 ## URLs
@@ -78,7 +80,7 @@ categories in App Store Connect, they get renamed occasionally):
 | User ID | Yes | Yes | No | App functionality |
 | Purchase History | Yes (orders/transactions) | Yes | No | App functionality |
 | Other Financial Info | No (Stripe handles card/bank data directly, not us) | — | — | — |
-| Photos or Videos | Only if you add photo upload later — currently listing photos are pasted URLs, not uploaded through the app | — | — | — |
+| Photos or Videos | Yes (listing photos and business verification documents, captured with the camera or picked from the library) | Yes | No | App functionality |
 
 Declare **no data used for tracking** (no ad networks/trackers in this
 codebase) and **no data sold**.
