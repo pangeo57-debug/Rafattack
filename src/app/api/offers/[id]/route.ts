@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { offerRespondSchema } from "@/lib/validators";
 import { notify } from "@/lib/notify";
-import { acceptOfferAndCreateTransaction } from "@/lib/offers";
+import { acceptOfferAndCreateTransaction, InsufficientStockError } from "@/lib/offers";
+import { isBusinessSuspended } from "@/lib/session";
 
 export async function PATCH(
   req: NextRequest,
@@ -47,8 +48,7 @@ export async function PATCH(
   }
 
   if (action === "ACCEPT" || action === "COUNTER") {
-    const myBusiness = await prisma.business.findUnique({ where: { id: businessId } });
-    if (myBusiness?.verificationStatus === "SUSPENDED") {
+    if (await isBusinessSuspended(businessId)) {
       return NextResponse.json({ error: "Your account is suspended." }, { status: 403 });
     }
   }
@@ -58,13 +58,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Only the seller can respond to a new offer." }, { status: 403 });
     }
     if (action === "ACCEPT") {
-      const transaction = await acceptOfferAndCreateTransaction(
-        offer,
-        offer.listing,
-        offer.offeredPrice,
-        offer.quantity
-      );
-      return NextResponse.json({ offer, transaction });
+      try {
+        const transaction = await acceptOfferAndCreateTransaction(
+          offer,
+          offer.listing,
+          offer.offeredPrice,
+          offer.quantity
+        );
+        return NextResponse.json({ offer, transaction });
+      } catch (err) {
+        if (err instanceof InsufficientStockError) {
+          return NextResponse.json({ error: err.message }, { status: 409 });
+        }
+        throw err;
+      }
     }
     if (action === "REJECT") {
       const updated = await prisma.offer.update({ where: { id }, data: { status: "REJECTED" } });
@@ -101,13 +108,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Only the buyer can respond to a counter-offer." }, { status: 403 });
     }
     if (action === "ACCEPT") {
-      const transaction = await acceptOfferAndCreateTransaction(
-        offer,
-        offer.listing,
-        offer.counterPrice!,
-        offer.counterQuantity!
-      );
-      return NextResponse.json({ offer, transaction });
+      try {
+        const transaction = await acceptOfferAndCreateTransaction(
+          offer,
+          offer.listing,
+          offer.counterPrice!,
+          offer.counterQuantity!
+        );
+        return NextResponse.json({ offer, transaction });
+      } catch (err) {
+        if (err instanceof InsufficientStockError) {
+          return NextResponse.json({ error: err.message }, { status: 409 });
+        }
+        throw err;
+      }
     }
     if (action === "REJECT") {
       const updated = await prisma.offer.update({ where: { id }, data: { status: "REJECTED" } });

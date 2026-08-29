@@ -1,5 +1,17 @@
 import { Resend } from "resend";
 
+// Any user-supplied text (business name, etc.) interpolated into an email
+// body must go through this first — emails are raw HTML strings, not React,
+// so nothing escapes them automatically the way JSX does.
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
 const FROM = process.env.EMAIL_FROM ?? "Surplo <onboarding@resend.dev>";

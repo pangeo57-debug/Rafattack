@@ -23,3 +23,16 @@ export async function requireAdmin() {
   if (user.platformRole !== "ADMIN") redirect("/dashboard");
   return user;
 }
+
+// Single source of truth for "is this business blocked from listing, offering,
+// or paying". Every API route that lets a business list, offer, or pay must
+// call this — a route that reimplements the check inline will eventually
+// drift from the others (one already had, letting a suspended business
+// reactivate its own removed listing).
+export async function isBusinessSuspended(businessId: string): Promise<boolean> {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { verificationStatus: true },
+  });
+  return business?.verificationStatus === "SUSPENDED";
+}

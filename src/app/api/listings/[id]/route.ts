@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { listingSchema } from "@/lib/validators";
+import { isBusinessSuspended } from "@/lib/session";
 
 export async function GET(
   _req: NextRequest,
@@ -30,6 +31,9 @@ export async function PATCH(
   if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (listing.sellerBusinessId !== session.user.businessId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (await isBusinessSuspended(session.user.businessId)) {
+    return NextResponse.json({ error: "Your account is suspended and can't edit listings." }, { status: 403 });
   }
 
   const json = await req.json();

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { offerSchema } from "@/lib/validators";
 import { notify } from "@/lib/notify";
 import { acceptOfferAndCreateTransaction } from "@/lib/offers";
+import { isBusinessSuspended } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -34,8 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const buyerBusiness = await prisma.business.findUnique({ where: { id: session.user.businessId } });
-  if (buyerBusiness?.verificationStatus === "SUSPENDED") {
+  if (await isBusinessSuspended(session.user.businessId)) {
     return NextResponse.json({ error: "Your account is suspended and can't make offers." }, { status: 403 });
   }
 

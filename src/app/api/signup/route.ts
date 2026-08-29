@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validators";
 import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 import { createToken } from "@/lib/tokens";
-import { sendEmail, emailShell } from "@/lib/email";
+import { sendEmail, emailShell, escapeHtml } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const allowed = await checkRateLimit(`signup:${clientIp(req)}`, 8, 60);
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     "Verify your email — Surplo",
     emailShell(
       "Verify your email",
-      `<p>Welcome to Surplo! Confirm your email to finish setting up ${data.businessName}.</p>
+      `<p>Welcome to Surplo! Confirm your email to finish setting up ${escapeHtml(data.businessName)}.</p>
        <p><a href="${link}" style="color:#4f46e5;">Verify email</a></p>
        <p>This link expires in 24 hours.</p>`
     )

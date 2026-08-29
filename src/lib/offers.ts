@@ -3,6 +3,13 @@ import { getCommissionPercent, computeAmounts } from "@/lib/commission";
 import { notify } from "@/lib/notify";
 import type { Offer, Listing } from "@prisma/client";
 
+export class InsufficientStockError extends Error {
+  constructor() {
+    super("Not enough stock left on this listing to accept this offer.");
+    this.name = "InsufficientStockError";
+  }
+}
+
 export async function acceptOfferAndCreateTransaction(
   offer: Offer,
   listing: Listing,
@@ -26,14 +33,26 @@ export async function acceptOfferAndCreateTransaction(
       },
     });
 
-    const remaining = listing.quantityAvailable - finalQuantity;
-    await tx.listing.update({
-      where: { id: listing.id },
-      data: {
-        quantityAvailable: Math.max(remaining, 0),
-        status: remaining <= 0 ? "SOLD_OUT" : listing.status,
-      },
+    // Decrement atomically and conditionally, guarded in the same statement
+    // by the current stock level — not by the `listing` snapshot passed into
+    // this function, which may already be stale by the time this runs.
+    // Two concurrent accepts on the same listing each take a row lock here,
+    // so the second one sees the first's decrement instead of overwriting it
+    // (a plain read-then-write on `listing.quantityAvailable` let two
+    // accepts each independently subtract from the same stale number,
+    // silently overselling the listing).
+    const decremented = await tx.listing.updateMany({
+      where: { id: listing.id, quantityAvailable: { gte: finalQuantity } },
+      data: { quantityAvailable: { decrement: finalQuantity } },
     });
+    if (decremented.count === 0) {
+      throw new InsufficientStockError();
+    }
+
+    const fresh = await tx.listing.findUniqueOrThrow({ where: { id: listing.id } });
+    if (fresh.quantityAvailable <= 0 && fresh.status === "ACTIVE") {
+      await tx.listing.update({ where: { id: listing.id }, data: { status: "SOLD_OUT" } });
+    }
 
     return tx.transaction.create({
       data: {

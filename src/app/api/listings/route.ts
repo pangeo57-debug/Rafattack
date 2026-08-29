@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { listingSchema } from "@/lib/validators";
 import { notifyMatchingSavedSearches } from "@/lib/notify";
+import { isBusinessSuspended } from "@/lib/session";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -55,8 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const business = await prisma.business.findUnique({ where: { id: session.user.businessId } });
-  if (business?.verificationStatus === "SUSPENDED") {
+  if (await isBusinessSuspended(session.user.businessId)) {
     return NextResponse.json({ error: "Your account is suspended and can't list inventory." }, { status: 403 });
   }
 

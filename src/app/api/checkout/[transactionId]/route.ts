@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
+import { isBusinessSuspended } from "@/lib/session";
 
 export async function POST(
   _req: Request,
@@ -21,8 +22,7 @@ export async function POST(
   if (transaction.buyerBusinessId !== session.user.businessId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const buyerBusiness = await prisma.business.findUnique({ where: { id: session.user.businessId } });
-  if (buyerBusiness?.verificationStatus === "SUSPENDED") {
+  if (await isBusinessSuspended(session.user.businessId)) {
     return NextResponse.json({ error: "Your account is suspended and can't complete purchases." }, { status: 403 });
   }
   if (transaction.orderStatus !== "AWAITING_PAYMENT") {
