@@ -78,19 +78,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
     }
 
-    if (transaction.sellerBusiness.stripeAccountId) {
-      const stripe = requireStripe();
-      await stripe.transfers.create({
-        amount: Math.round(transaction.sellerPayoutAmount * 100),
-        currency: "eur",
-        destination: transaction.sellerBusiness.stripeAccountId,
-        transfer_group: transaction.id,
-        metadata: { transactionId: transaction.id },
-      });
-    }
-
-    const updated = await prisma.transaction.update({
-      where: { id },
+    // Atomically claim the completion before paying out: two concurrent
+    // COMPLETE requests (a double-click, a network retry) would otherwise
+    // both read orderStatus as SHIPPED/PICKED_UP and both call
+    // stripe.transfers.create(), paying the seller twice for one order. This
+    // conditional update only succeeds for the first caller; the loser sees
+    // count === 0 and stops before ever touching Stripe.
+    const claimed = await prisma.transaction.updateMany({
+      where: { id, orderStatus: { in: ["SHIPPED", "PICKED_UP"] } },
       data: {
         orderStatus: "COMPLETED",
         paymentStatus: "CAPTURED",
@@ -98,6 +93,25 @@ export async function PATCH(
         completedAt: new Date(),
       },
     });
+    if (claimed.count === 0) {
+      return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
+    }
+
+    if (transaction.sellerBusiness.stripeAccountId) {
+      const stripe = requireStripe();
+      await stripe.transfers.create(
+        {
+          amount: Math.round(transaction.sellerPayoutAmount * 100),
+          currency: "eur",
+          destination: transaction.sellerBusiness.stripeAccountId,
+          transfer_group: transaction.id,
+          metadata: { transactionId: transaction.id },
+        },
+        { idempotencyKey: `transfer-complete-${transaction.id}` }
+      );
+    }
+
+    const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
     await notify(
       transaction.sellerBusinessId,
       "ORDER_STATUS_CHANGED",
