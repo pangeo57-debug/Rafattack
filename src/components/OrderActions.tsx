@@ -74,7 +74,20 @@ export default function OrderActions({
 
   if (role === "buyer" && (orderStatus === "SHIPPED" || orderStatus === "PICKED_UP")) {
     actions.push(
-      <button key="complete" disabled={loading !== null} onClick={() => act("COMPLETE")} className={ui.btnPrimary}>
+      <button
+        key="complete"
+        disabled={loading !== null}
+        onClick={() => {
+          if (
+            window.confirm(
+              "This releases payment to the seller and can't be undone — all sales are final once you confirm. Only continue if you've checked the goods match the listing."
+            )
+          ) {
+            act("COMPLETE");
+          }
+        }}
+        className={ui.btnPrimary}
+      >
         {loading === "COMPLETE" ? "Confirming..." : "Confirm receipt & release payment"}
       </button>
     );

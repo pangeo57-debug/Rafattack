@@ -53,13 +53,21 @@ export default function TermsPage() {
         transaction and hold payment in escrow, but do not inspect, store,
         or ship the inventory ourselves.
       </p>
+      <p className="mt-2">
+        <strong>All sales are final.</strong> As is standard for overstock and
+        liquidation marketplaces, there is no return window and we do not
+        accept returned goods. A buyer&apos;s only recourse is the dispute
+        process in Section 5, and only before confirming receipt — once
+        receipt is confirmed, the sale cannot be reversed through the
+        Service.
+      </p>
 
       <h2 className="mt-8 text-lg font-semibold text-zinc-900">5. Payments, escrow &amp; commission</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>Payments are processed by Stripe. By using paid features you also agree to Stripe&apos;s terms and, if you receive payouts, the Stripe Connected Account Agreement.</li>
         <li>When a buyer pays, funds are authorized and held until the buyer confirms receipt of the order, at which point they are captured and released to the seller, minus our commission.</li>
         <li>The commission percentage is disclosed in the app before checkout and may be changed for future orders; it does not change on an order already placed.</li>
-        <li>If a dispute is raised, we may review the order and release the funds to either the buyer (refund) or the seller, based on the evidence provided by both sides.</li>
+        <li>If a dispute is raised before the buyer confirms receipt, we may review the order and release the funds to either the buyer (refund) or the seller, based on the evidence provided by both sides. We are not a party to the underlying sale and do not independently guarantee, insure, or bear financial responsibility for the condition of goods traded between buyers and sellers.</li>
       </ul>
 
       <h2 className="mt-8 text-lg font-semibold text-zinc-900">6. Reviews</h2>

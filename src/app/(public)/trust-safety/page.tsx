@@ -92,23 +92,31 @@ export default function TrustSafetyPage() {
       <section className="mt-8">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
           <RotateCcw className="h-4.5 w-4.5 text-brand" />
-          Refunds
+          All sales are final
         </h2>
+        <p className="mt-2">
+          Like other B2B liquidation and overstock marketplaces, purchases on Surplo are
+          <strong> final once you confirm receipt</strong> &mdash; there is no return window
+          for a change of mind, and we do not accept returned goods. Overstock, past-season,
+          and returned inventory is sold as described, at a discount that reflects that. It
+          is on you, the buyer, to inspect what arrives against the listing before confirming
+          receipt.
+        </p>
+        <p className="mt-2">Refunds only happen in two situations:</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>An order can be cancelled and fully refunded any time before payment is confirmed.</li>
+          <li>The order is cancelled before payment is confirmed (no dispute needed).</li>
           <li>
-            After payment, a refund happens through the dispute process above, or if the
-            seller agrees to cancel before shipping.
-          </li>
-          <li>
-            Refunds are issued back to the original Stripe payment method and follow
-            Stripe&apos;s standard processing times once approved.
-          </li>
-          <li>
-            We do not refund for buyer&apos;s remorse on an accurately described order, or once
-            you&apos;ve confirmed receipt.
+            A dispute you opened <em>before confirming receipt</em> is resolved in your favor
+            &mdash; e.g. the order never arrived, or what arrived was materially different
+            from the listing (wrong item, wrong quantity, undisclosed damage).
           </li>
         </ul>
+        <p className="mt-2">
+          We do not refund for buyer&apos;s remorse, minor condition variation typical of
+          liquidation/returned goods, or anything at all once you&apos;ve confirmed receipt
+          &mdash; confirmation is final. Approved refunds go back to the original Stripe
+          payment method on Stripe&apos;s standard processing timeline.
+        </p>
       </section>
 
       <section className="mt-8">
