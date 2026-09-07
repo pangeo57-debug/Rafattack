@@ -103,6 +103,25 @@ The seed also creates one demo listing so `/listings` isn't empty.
    run `npm run db:seed` once locally against that same `DATABASE_URL` if
    you want the demo accounts on the live site too.
 
+## Deploying to Netlify
+
+Works the same way, with two differences from Vercel:
+
+1. [app.netlify.com](https://app.netlify.com) → **Add new project → Import
+   an existing project** → pick this repo and the
+   `claude/overstock-trade-marketplace-a56vt4` branch. `netlify.toml` in
+   this repo already declares the `@netlify/plugin-nextjs` build plugin, so
+   Netlify builds it as a full server-rendered Next.js app rather than a
+   static export — without that plugin every route 404s.
+2. There's no built-in "create a database" button like Vercel's Storage
+   tab — install the **Prisma Postgres** extension from the site's
+   **Extensions** tab instead, which sets `DATABASE_URL` for you the same
+   way.
+3. Add `AUTH_SECRET` and `NEXT_PUBLIC_APP_URL` as on Vercel, plus
+   **`AUTH_TRUST_HOST=true`** — Auth.js only auto-trusts the host on
+   Vercel, so without this env var login fails with an "UntrustedHost"
+   error on any other host.
+
 ### Environment variables
 
 See `.env.example`. At minimum for local dev without payments you only
