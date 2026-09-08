@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
 import { isBusinessSuspended } from "@/lib/session";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(
   _req: Request,
@@ -12,6 +13,16 @@ export async function POST(
   const session = await auth();
   if (!session?.user?.businessId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Every call here hits the Stripe API to create a Checkout Session — cap
+  // it so a script can't hammer Stripe (and our API usage) by looping this.
+  const allowed = await checkRateLimit(`checkout-session:${session.user.businessId}`, 20, 60);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many checkout attempts. Please wait a bit and try again." },
+      { status: 429 }
+    );
   }
 
   const transaction = await prisma.transaction.findUnique({

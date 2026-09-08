@@ -2,11 +2,22 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST() {
   const session = await auth();
   if (!session?.user?.businessId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Every call here hits the Stripe API (account creation + account link) —
+  // cap it so a script can't hammer Stripe by looping this.
+  const allowed = await checkRateLimit(`stripe-connect:${session.user.businessId}`, 10, 60);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please wait a bit and try again." },
+      { status: 429 }
+    );
   }
 
   const stripe = requireStripe();
