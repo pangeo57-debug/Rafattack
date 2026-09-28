@@ -61,3 +61,12 @@ export const OFFER_STATUS_LABELS: Record<string, string> = {
   WITHDRAWN: "Withdrawn",
   EXPIRED: "Expired",
 };
+
+export const REPORT_REASONS = [
+  { value: "ILLEGAL_PRODUCT", label: "Illegal product" },
+  { value: "COUNTERFEIT", label: "Counterfeit or IP infringement" },
+  { value: "UNSAFE_PRODUCT", label: "Unsafe or recalled product" },
+  { value: "MISLEADING", label: "Misleading description or photos" },
+  { value: "FRAUD", label: "Scam or fraud" },
+  { value: "OTHER", label: "Other" },
+] as const;

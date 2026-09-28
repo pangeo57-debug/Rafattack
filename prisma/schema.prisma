@@ -105,6 +105,7 @@ enum NotificationType {
   REVIEW_RECEIVED
   VERIFICATION_UPDATED
   DISPUTE_UPDATED
+  LISTING_MODERATED
 }
 
 model Business {
@@ -216,6 +217,8 @@ model Listing {
 
   offers       Offer[]
   transactions Transaction[]
+  reports      ListingReport[]
+  moderation   ModerationDecision[]
 
   @@index([status])
   @@index([category])
@@ -360,4 +363,65 @@ model PlatformSetting {
   id                String   @id @default("singleton")
   commissionPercent Float    @default(8)
   updatedAt         DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Digital Services Act: notice and action (Art. 16) and statement of reasons
+// (Art. 17). Anyone can report a listing; an admin decides; the seller gets a
+// written reason. Decisions are append-only.
+// ---------------------------------------------------------------------------
+
+enum ReportReason {
+  ILLEGAL_PRODUCT
+  COUNTERFEIT
+  UNSAFE_PRODUCT
+  MISLEADING
+  FRAUD
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
+
+enum ModerationGround {
+  ILLEGAL_CONTENT
+  TERMS_VIOLATION
+}
+
+model ListingReport {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  reporterUserId String?
+  reporterName   String
+  reporterEmail  String
+  reason         ReportReason
+  explanation    String
+
+  status       ReportStatus @default(OPEN)
+  decisionNote String?
+  decidedAt    DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([status])
+  @@index([listingId])
+}
+
+model ModerationDecision {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+  reportId  String?
+
+  adminUserId  String
+  ground       ModerationGround
+  facts        String
+  termsSection String?
+  createdAt    DateTime         @default(now())
+
+  @@index([listingId])
 }

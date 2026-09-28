@@ -52,6 +52,11 @@ export default function PrivacyPolicyPage() {
           visible only to our admin team, and are never shown to other users.
         </li>
         <li>
+          <strong>Listing reports:</strong> if you report a listing, your name,
+          email and the report. We use them to review the report and tell you
+          the outcome. We do not tell the seller who reported them.
+        </li>
+        <li>
           <strong>Account credentials:</strong> your password is stored only
           as a salted hash — we cannot read your plaintext password.
         </li>

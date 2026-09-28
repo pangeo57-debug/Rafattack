@@ -39,7 +39,8 @@ export default function TermsPage() {
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>Sellers are solely responsible for the accuracy of their listings (description, condition, quantity, pricing, and photos) and for having the legal right to sell the listed inventory.</li>
         <li>Prohibited, counterfeit, stolen, recalled, or unsafe goods may not be listed.</li>
-        <li>We may remove a listing or suspend an account that violates these Terms or applicable law.</li>
+        <li>We may remove a listing or suspend an account that violates these Terms or applicable law. When we do, we tell you in writing what we did, why, on which ground, and how to contest it.</li>
+        <li>Anyone, including people without an account, can report a listing they believe is illegal or breaks these Terms with the &ldquo;Report this listing&rdquo; link on the listing page. A person reviews every report, and the reporter is told the outcome.</li>
       </ul>
 
       <h2 className="mt-8 text-lg font-semibold text-zinc-900">4. Offers &amp; orders</h2>

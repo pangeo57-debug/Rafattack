@@ -36,6 +36,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Your account is suspended and can't edit listings." }, { status: 403 });
   }
 
+  // A removed listing stays exactly as it was when we decided: it is the
+  // evidence behind the removal, and a seller editing it could hide that.
+  if (listing.status === "REMOVED") {
+    return NextResponse.json({ error: "This listing was removed and can't be edited." }, { status: 400 });
+  }
+
   const json = await req.json();
 
   if (json.status && Object.keys(json).length === 1) {

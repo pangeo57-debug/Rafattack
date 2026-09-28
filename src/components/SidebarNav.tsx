@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Plus,
+  Flag,
 } from "lucide-react";
 import SignOutButton from "@/components/SignOutButton";
 import { badgeColor } from "@/lib/ui";
@@ -52,6 +53,7 @@ const adminNav: NavItem[] = [
   { href: "/admin/businesses", label: "Businesses", icon: Users },
   { href: "/admin/transactions", label: "Transactions", icon: Receipt },
   { href: "/admin/disputes", label: "Disputes", icon: AlertTriangle },
+  { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

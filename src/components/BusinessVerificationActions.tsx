@@ -7,15 +7,28 @@ import { ui } from "@/lib/ui";
 export default function BusinessVerificationActions({ businessId }: { businessId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function setStatus(verificationStatus: string) {
+    let verificationNote: string | undefined;
+    if (verificationStatus !== "VERIFIED") {
+      const note = window.prompt("Reason the business will read (required):");
+      if (note === null) return;
+      verificationNote = note;
+    }
     setLoading(verificationStatus);
-    await fetch(`/api/admin/businesses/${businessId}`, {
+    setError(null);
+    const res = await fetch(`/api/admin/businesses/${businessId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ verificationStatus }),
+      body: JSON.stringify({ verificationStatus, verificationNote }),
     });
     setLoading(null);
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError(json.error ?? "Something went wrong.");
+      return;
+    }
     router.refresh();
   }
 
@@ -30,6 +43,7 @@ export default function BusinessVerificationActions({ businessId }: { businessId
       <button disabled={loading !== null} onClick={() => setStatus("SUSPENDED")} className={ui.btnDanger}>
         Suspend
       </button>
+      {error && <p className="w-full text-sm text-rose-600" role="alert">{error}</p>}
     </div>
   );
 }

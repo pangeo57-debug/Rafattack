@@ -8,6 +8,8 @@ import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
 import { LISTING_CONDITIONS, FULFILLMENT_TYPES } from "@/lib/constants";
 import OfferBox from "@/components/OfferBox";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import ReportListing from "@/components/ReportListing";
+import { statementOfReasons } from "@/lib/moderation";
 
 export async function generateMetadata({
   params,
@@ -17,9 +19,9 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await prisma.listing.findUnique({
     where: { id },
-    select: { title: true, description: true, askingPrice: true, category: true },
+    select: { title: true, description: true, askingPrice: true, category: true, status: true },
   });
-  if (!listing) return {};
+  if (!listing || listing.status === "REMOVED") return {};
 
   const title = `${listing.title} — Surplo`;
   const description = `${formatMoney(listing.askingPrice)} · ${listing.category} · ${listing.description.slice(0, 140)}`;
@@ -48,6 +50,14 @@ export default async function ListingDetailPage({
 
   const session = await auth();
   const isOwner = session?.user?.businessId === listing.sellerBusinessId;
+  const isAdmin = session?.user?.platformRole === "ADMIN";
+  // A removed listing is gone for everyone except its seller (who sees why)
+  // and admins. Same 404 as a listing that never existed.
+  if (listing.status === "REMOVED" && !isOwner && !isAdmin) notFound();
+  const moderation =
+    listing.status === "REMOVED"
+      ? await prisma.moderationDecision.findFirst({ where: { listingId: listing.id }, orderBy: { createdAt: "desc" } })
+      : null;
   const photos: string[] = JSON.parse(listing.photos || "[]");
   const condition = LISTING_CONDITIONS.find((c) => c.value === listing.condition)?.label;
   const fulfillment = FULFILLMENT_TYPES.find((f) => f.value === listing.fulfillment)?.label;
@@ -60,6 +70,21 @@ export default async function ListingDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      {moderation && (
+        <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800" data-testid="statement-of-reasons">
+          <p className="font-medium">Surplo removed this listing</p>
+          {statementOfReasons({
+            title: listing.title,
+            ground: moderation.ground,
+            facts: moderation.facts,
+            termsSection: moderation.termsSection,
+            triggeredByReport: Boolean(moderation.reportId),
+          }).map((line) => (
+            <p key={line} className="mt-1">{line}</p>
+          ))}
+          <p className="mt-1 text-xs text-rose-700">Decided {formatDate(moderation.createdAt)}.</p>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {photos.length > 0 ? (
@@ -157,9 +182,11 @@ export default async function ListingDetailPage({
           <div className="mt-4">
             {isOwner ? (
               <div className="flex flex-col gap-2">
-                <Link href={`/listings/${listing.id}/edit`} className={ui.btnSecondary}>
-                  Edit listing
-                </Link>
+                {listing.status !== "REMOVED" && (
+                  <Link href={`/listings/${listing.id}/edit`} className={ui.btnSecondary}>
+                    Edit listing
+                  </Link>
+                )}
                 <p className="text-xs text-zinc-400">This is your listing.</p>
               </div>
             ) : !session?.user ? (
@@ -177,6 +204,12 @@ export default async function ListingDetailPage({
               />
             )}
           </div>
+
+          {!isOwner && listing.status !== "REMOVED" && (
+            <div className="mt-6">
+              <ReportListing listingId={listing.id} />
+            </div>
+          )}
         </div>
       </div>
     </div>
