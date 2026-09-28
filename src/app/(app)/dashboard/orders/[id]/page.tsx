@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { findTransactionAsParty } from "@/lib/access";
 import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import PayButton from "@/components/PayButton";
@@ -18,7 +19,11 @@ export default async function OrderDetailPage({
   const { business } = await requireBusiness();
   const { id } = await params;
 
-  const transaction = await prisma.transaction.findUnique({
+  const access = await findTransactionAsParty(id, business.id);
+  if (!access) notFound();
+  const { isSeller, isBuyer } = access;
+
+  const transaction = await prisma.transaction.findUniqueOrThrow({
     where: { id },
     include: {
       listing: true,
@@ -27,11 +32,6 @@ export default async function OrderDetailPage({
       reviews: true,
     },
   });
-  if (!transaction) notFound();
-
-  const isSeller = transaction.sellerBusinessId === business.id;
-  const isBuyer = transaction.buyerBusinessId === business.id;
-  if (!isSeller && !isBuyer) notFound();
 
   const role = isSeller ? "seller" : "buyer";
   const myReview = transaction.reviews.find((r) => r.reviewerBusinessId === business.id);

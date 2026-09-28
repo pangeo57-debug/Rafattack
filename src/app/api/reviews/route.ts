@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { findTransactionAsParty, notFoundResponse } from "@/lib/access";
 import { reviewSchema } from "@/lib/validators";
 import { notify } from "@/lib/notify";
 
@@ -17,16 +18,12 @@ export async function POST(req: NextRequest) {
   }
   const { transactionId, rating, comment } = parsed.data;
 
-  const transaction = await prisma.transaction.findUnique({ where: { id: transactionId } });
-  if (!transaction) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Ownership first: an order's status must not be revealed to strangers.
+  const access = await findTransactionAsParty(transactionId, businessId);
+  if (!access) return notFoundResponse();
+  const { transaction, isBuyer } = access;
   if (transaction.orderStatus !== "COMPLETED") {
     return NextResponse.json({ error: "You can only review completed orders." }, { status: 400 });
-  }
-
-  const isSeller = transaction.sellerBusinessId === businessId;
-  const isBuyer = transaction.buyerBusinessId === businessId;
-  if (!isSeller && !isBuyer) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const existing = await prisma.review.findUnique({

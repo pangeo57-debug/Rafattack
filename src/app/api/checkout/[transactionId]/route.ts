@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { findTransactionAsParty, notFoundResponse } from "@/lib/access";
 import { requireStripe } from "@/lib/stripe";
 import { isBusinessSuspended } from "@/lib/session";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -25,13 +26,11 @@ export async function POST(
     );
   }
 
-  const transaction = await prisma.transaction.findUnique({
-    where: { id: transactionId },
-    include: { listing: true, sellerBusiness: true },
-  });
-  if (!transaction) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (transaction.buyerBusinessId !== session.user.businessId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const access = await findTransactionAsParty(transactionId, session.user.businessId);
+  if (!access) return notFoundResponse();
+  const { transaction, isBuyer } = access;
+  if (!isBuyer) {
+    return NextResponse.json({ error: "Only the buyer can pay for this order." }, { status: 403 });
   }
   if (await isBusinessSuspended(session.user.businessId)) {
     return NextResponse.json({ error: "Your account is suspended and can't complete purchases." }, { status: 403 });

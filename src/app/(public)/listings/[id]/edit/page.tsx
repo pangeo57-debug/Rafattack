@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireBusiness } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { findOwnListing } from "@/lib/access";
 import ListingForm from "@/components/ListingForm";
 
 export default async function EditListingPage({
@@ -10,8 +10,8 @@ export default async function EditListingPage({
 }) {
   const { business } = await requireBusiness();
   const { id } = await params;
-  const listing = await prisma.listing.findUnique({ where: { id } });
-  if (!listing || listing.sellerBusinessId !== business.id) notFound();
+  const listing = await findOwnListing(id, business.id);
+  if (!listing) notFound();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">

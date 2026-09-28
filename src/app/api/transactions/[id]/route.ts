@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { findTransactionAsParty, notFoundResponse } from "@/lib/access";
 import { requireStripe } from "@/lib/stripe";
 import { notify } from "@/lib/notify";
 
@@ -21,17 +22,9 @@ export async function PATCH(
   }
   const businessId = session.user.businessId;
 
-  const transaction = await prisma.transaction.findUnique({
-    where: { id },
-    include: { listing: true, sellerBusiness: true },
-  });
-  if (!transaction) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const isSeller = transaction.sellerBusinessId === businessId;
-  const isBuyer = transaction.buyerBusinessId === businessId;
-  if (!isSeller && !isBuyer) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const access = await findTransactionAsParty(id, businessId);
+  if (!access) return notFoundResponse();
+  const { transaction, isSeller, isBuyer } = access;
 
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) {

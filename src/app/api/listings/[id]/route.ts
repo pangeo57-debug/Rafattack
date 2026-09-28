@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { listingSchema } from "@/lib/validators";
 import { isBusinessSuspended } from "@/lib/session";
+import { findOwnListing, notFoundResponse } from "@/lib/access";
+
+const SELLER_SETTABLE: string[] = ["ACTIVE", "PAUSED"];
 
 export async function GET(
   _req: NextRequest,
@@ -27,11 +30,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id } });
-  if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (listing.sellerBusinessId !== session.user.businessId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const listing = await findOwnListing(id, session.user.businessId);
+  if (!listing) return notFoundResponse();
   if (await isBusinessSuspended(session.user.businessId)) {
     return NextResponse.json({ error: "Your account is suspended and can't edit listings." }, { status: 403 });
   }
@@ -39,6 +39,12 @@ export async function PATCH(
   const json = await req.json();
 
   if (json.status && Object.keys(json).length === 1) {
+    // Sellers may only pause and resume. SOLD_OUT, EXPIRED and REMOVED are
+    // set by the system (sales, expiry, deletion, suspension) and can't be
+    // undone from the browser.
+    if (!SELLER_SETTABLE.includes(json.status) || !SELLER_SETTABLE.includes(listing.status)) {
+      return NextResponse.json({ error: "This listing's status can't be changed." }, { status: 400 });
+    }
     const updated = await prisma.listing.update({
       where: { id },
       data: { status: json.status },
@@ -72,11 +78,8 @@ export async function DELETE(
   if (!session?.user?.businessId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const listing = await prisma.listing.findUnique({ where: { id } });
-  if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (listing.sellerBusinessId !== session.user.businessId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const listing = await findOwnListing(id, session.user.businessId);
+  if (!listing) return notFoundResponse();
   await prisma.listing.update({ where: { id }, data: { status: "REMOVED" } });
   return NextResponse.json({ ok: true });
 }
