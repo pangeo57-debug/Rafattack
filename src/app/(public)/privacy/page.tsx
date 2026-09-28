@@ -94,6 +94,12 @@ export default function PrivacyPolicyPage() {
           Your login email and tax/VAT ID are never shown publicly.
         </li>
         <li>
+          <strong>The seller of an order you paid for</strong> — your business
+          name, tax/VAT ID, address and contact email, so the seller can issue
+          you the invoice for the goods, as tax law requires. Only the seller
+          of that specific order sees them, and only after payment.
+        </li>
+        <li>
           <strong>Resend</strong> — to deliver account emails (email
           verification and password reset). Receives your email address and
           the content of those emails.

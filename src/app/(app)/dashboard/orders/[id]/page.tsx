@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { findTransactionAsParty } from "@/lib/access";
+import { buyerBillingForSeller } from "@/lib/invoicing";
 import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import PayButton from "@/components/PayButton";
@@ -36,6 +37,7 @@ export default async function OrderDetailPage({
   const role = isSeller ? "seller" : "buyer";
   const myReview = transaction.reviews.find((r) => r.reviewerBusinessId === business.id);
   const otherParty = isSeller ? transaction.buyerBusiness : transaction.sellerBusiness;
+  const billing = buyerBillingForSeller(transaction, isSeller);
 
   const timeline = [
     { label: "Order created", at: transaction.createdAt },
@@ -97,6 +99,58 @@ export default async function OrderDetailPage({
           </div>
         </dl>
       </div>
+
+      {billing && (
+        <div className={`${ui.card} mt-4 p-4`} data-testid="buyer-billing">
+          <h2 className="text-sm font-medium text-zinc-900">Buyer&apos;s invoice details</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            You issue the invoice for this sale to the buyer. Surplo does not issue it for you.
+          </p>
+          <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-zinc-400">Business name</dt>
+              <dd className="text-zinc-800">{billing.name}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-400">Tax / VAT ID</dt>
+              <dd className="text-zinc-800">{billing.taxId}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-400">Address</dt>
+              <dd className="text-zinc-800">
+                {billing.address ? (
+                  `${billing.address}, ${billing.city}, ${billing.country}`
+                ) : (
+                  <>
+                    {billing.city}, {billing.country}
+                    <span className="block text-xs text-amber-700">
+                      No street address on file. Ask the buyer before invoicing.
+                    </span>
+                  </>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-zinc-400">Email</dt>
+              <dd className="text-zinc-800">{billing.contactEmail}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
+
+      {isSeller && !transaction.paidAt && transaction.orderStatus === "AWAITING_PAYMENT" && (
+        <p className="mt-4 text-sm text-zinc-500">The buyer&apos;s invoice details will appear here once the order is paid.</p>
+      )}
+
+      {isBuyer && !transaction.buyerBusiness.address && transaction.orderStatus !== "CANCELLED" && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          The seller will invoice you using your business details. Your street address is missing:{" "}
+          <Link href="/dashboard/business" className="font-medium underline">
+            add it in your business profile
+          </Link>
+          .
+        </div>
+      )}
 
       {transaction.orderStatus === "AWAITING_PAYMENT" && isBuyer && (
         <div className="mt-4">
