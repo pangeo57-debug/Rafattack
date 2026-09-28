@@ -140,6 +140,7 @@ model Business {
   sales           Transaction[]  @relation("SellerTransactions")
   reviewsGiven    Review[]       @relation("ReviewerReviews")
   reviewsReceived Review[]       @relation("RevieweeReviews")
+  buyOrders       BuyOrder[]
 
   @@index([verificationStatus])
 }
@@ -242,6 +243,10 @@ model Offer {
   counterPrice    Float?
   counterQuantity Int?
   counterMessage  String?
+
+  // Set when the offer was created by a seller filling a standing buy request.
+  buyOrderId String?
+  buyOrder   BuyOrder? @relation(fields: [buyOrderId], references: [id])
 
   parentOfferId String?
   parentOffer   Offer?  @relation("OfferChain", fields: [parentOfferId], references: [id])
@@ -424,4 +429,48 @@ model ModerationDecision {
   createdAt    DateTime         @default(now())
 
   @@index([listingId])
+}
+
+// ---------------------------------------------------------------------------
+// Standing buy requests: a buyer says in advance what they will buy and at
+// what price. A seller whose listing matches can sell to it in one click.
+// Money is in integer cents (new code follows the rule from day one).
+// ---------------------------------------------------------------------------
+
+enum BuyOrderStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  FILLED
+  EXPIRED
+}
+
+model BuyOrder {
+  id              String   @id @default(cuid())
+  buyerBusinessId String
+  buyerBusiness   Business @relation(fields: [buyerBusinessId], references: [id])
+
+  category          String
+  conditions        ListingCondition[]
+  maxUnitPriceCents Int
+  currency          String             @default("EUR")
+
+  quantityWanted Int
+  remainingQty   Int
+  minLotQty      Int
+
+  country String
+  city    String?
+
+  status       BuyOrderStatus @default(ACTIVE)
+  pausedReason String?
+  expiresAt    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers Offer[]
+
+  @@index([status, category])
+  @@index([buyerBusinessId])
 }

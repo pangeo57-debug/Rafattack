@@ -10,11 +10,19 @@ export class InsufficientStockError extends Error {
   }
 }
 
+export class BuyOrderUnavailableError extends Error {
+  constructor() {
+    super("This buy request was just filled, paused or withdrawn by the buyer.");
+    this.name = "BuyOrderUnavailableError";
+  }
+}
+
 export async function acceptOfferAndCreateTransaction(
   offer: Offer,
   listing: Listing,
   finalPrice: number,
-  finalQuantity: number
+  finalQuantity: number,
+  opts: { buyOrderId?: string } = {}
 ) {
   const commissionPercent = await getCommissionPercent();
   const { amount, commissionAmount, sellerPayoutAmount } = computeAmounts(
@@ -41,6 +49,21 @@ export async function acceptOfferAndCreateTransaction(
     // (a plain read-then-write on `listing.quantityAvailable` let two
     // accepts each independently subtract from the same stale number,
     // silently overselling the listing).
+    // Filling a standing buy request: take the units off the request in the
+    // same transaction as the stock, with the same conditional-update guard,
+    // so two sellers can't both fill the last units a buyer asked for.
+    if (opts.buyOrderId) {
+      const claimed = await tx.buyOrder.updateMany({
+        where: { id: opts.buyOrderId, status: "ACTIVE", expiresAt: { gt: new Date() }, remainingQty: { gte: finalQuantity } },
+        data: { remainingQty: { decrement: finalQuantity } },
+      });
+      if (claimed.count === 0) throw new BuyOrderUnavailableError();
+      const bid = await tx.buyOrder.findUniqueOrThrow({ where: { id: opts.buyOrderId } });
+      if (bid.remainingQty < bid.minLotQty) {
+        await tx.buyOrder.update({ where: { id: bid.id }, data: { status: "FILLED" } });
+      }
+    }
+
     const decremented = await tx.listing.updateMany({
       where: { id: listing.id, quantityAvailable: { gte: finalQuantity } },
       data: { quantityAvailable: { decrement: finalQuantity } },
@@ -69,6 +92,17 @@ export async function acceptOfferAndCreateTransaction(
       },
     });
   });
+
+  if (opts.buyOrderId) {
+    await notify(
+      offer.buyerBusinessId,
+      "OFFER_UPDATED",
+      "Your buy request was filled",
+      `A seller sold you ${finalQuantity} × "${listing.title}" at your price. Pay within 48 hours to complete the order.`,
+      `/dashboard/orders/${transaction.id}`
+    );
+    return transaction;
+  }
 
   await notify(
     listing.sellerBusinessId,

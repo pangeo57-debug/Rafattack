@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sessionState } from "./session-state";
+import { sessionState, requestUser } from "./session-state";
 
 export async function resetDb() {
   const tables = await prisma.$queryRaw<{ tablename: string }[]>`
@@ -12,25 +12,25 @@ export async function resetDb() {
 let n = 0;
 
 export async function makeBusiness(opts: { verified?: boolean; stripe?: boolean } = {}) {
-  n++;
+  const i = ++n; // local copy: parallel callers must not share the counter across awaits
   const business = await prisma.business.create({
     data: {
-      name: `Biz ${n}`,
+      name: `Biz ${i}`,
       type: "RETAILER",
       category: "Apparel & Footwear",
       country: "Greece",
       city: "Athens",
-      taxId: `EL${n}`,
-      contactEmail: `biz${n}@test.local`,
+      taxId: `EL${i}`,
+      contactEmail: `biz${i}@test.local`,
       verificationStatus: opts.verified === false ? "PENDING" : "VERIFIED",
-      stripeAccountId: opts.stripe === false ? null : `acct_seed_${n}`,
+      stripeAccountId: opts.stripe === false ? null : `acct_seed_${i}`,
       stripeOnboarded: opts.stripe !== false,
     },
   });
   const user = await prisma.user.create({
     data: {
-      email: `user${n}@test.local`,
-      name: `User ${n}`,
+      email: `user${i}@test.local`,
+      name: `User ${i}`,
       passwordHash: "x",
       businessId: business.id,
       emailVerified: new Date(),
@@ -71,7 +71,15 @@ type Handler = (req: any, ctx: any) => Promise<Response>;
 /** Invoke a route handler exactly as Next.js would, returning status + parsed JSON. */
 export async function call(
   handler: Handler,
-  opts: { method?: string; body?: unknown; params?: Record<string, string>; headers?: Record<string, string>; rawBody?: string } = {}
+  opts: {
+    method?: string;
+    body?: unknown;
+    params?: Record<string, string>;
+    headers?: Record<string, string>;
+    rawBody?: string;
+    /** Run this one request as this user, whatever actAs() says (for concurrent users). */
+    as?: { user: { id: string; businessId: string | null; platformRole?: string } };
+  } = {}
 ) {
   const req = new Request("http://localhost:3000/api/test", {
     method: opts.method ?? "POST",
@@ -80,7 +88,13 @@ export async function call(
   });
   // NextRequest-only fields used by our handlers.
   Object.assign(req, { nextUrl: new URL(req.url) });
-  const res = await handler(req, { params: Promise.resolve(opts.params ?? {}) });
+  const invoke = () => handler(req, { params: Promise.resolve(opts.params ?? {}) });
+  const res = opts.as
+    ? await requestUser.run(
+        { id: opts.as.user.id, businessId: opts.as.user.businessId, platformRole: opts.as.user.platformRole ?? "USER" },
+        invoke
+      )
+    : await invoke();
   const text = await res.text();
   let json: unknown = null;
   try {

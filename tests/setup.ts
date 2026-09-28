@@ -6,8 +6,13 @@ import { sessionState, sentEmails } from "./session-state";
 // vi.mock factories are hoisted above imports, so they load their
 // dependencies lazily instead of closing over the imports above.
 vi.mock("@/auth", async () => {
-  const { sessionState } = await import("./session-state");
-  return { auth: async () => (sessionState.user ? { user: sessionState.user } : null) };
+  const { currentUser } = await import("./session-state");
+  return {
+    auth: async () => {
+      const user = currentUser();
+      return user ? { user } : null;
+    },
+  };
 });
 
 vi.mock("@/lib/stripe", async () => {

@@ -34,7 +34,7 @@ export async function PATCH(
   const { action, reason } = parsed.data;
 
   if (action === "CANCEL") {
-    const cancelled = await cancelUnpaidOrder(id);
+    const cancelled = await cancelUnpaidOrder(id, isBuyer ? "BUYER" : "SELLER");
     if (!cancelled) {
       return NextResponse.json({ error: "Only unpaid orders can be cancelled." }, { status: 400 });
     }

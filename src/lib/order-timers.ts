@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
 import { notify } from "@/lib/notify";
 import { cancelUnpaidOrder, completeOrder, refundUnshippedOrder } from "@/lib/order-actions";
+import { expireBuyOrders } from "@/lib/buy-orders";
 
 // Every order deadline lives here. The order page shows these same dates, so
 // what the user is told and what the timer does can't drift apart.
@@ -37,7 +38,7 @@ export function deadlineFor(
  * is never touched (DISPUTED has no deadline — an admin decides).
  */
 export async function runOrderTimers(now = new Date()) {
-  const result = { expired: 0, refunded: 0, completed: 0, skipped: 0 };
+  const result = { expired: 0, refunded: 0, completed: 0, skipped: 0, buyRequestsExpired: 0 };
 
   const unpaid = await prisma.transaction.findMany({
     where: { orderStatus: "AWAITING_PAYMENT", createdAt: { lte: new Date(now.getTime() - PAY_WITHIN_HOURS * HOUR) } },
@@ -48,7 +49,7 @@ export async function runOrderTimers(now = new Date()) {
       result.skipped++;
       continue;
     }
-    if (!(await cancelUnpaidOrder(t.id))) continue;
+    if (!(await cancelUnpaidOrder(t.id, "PAYMENT_DEADLINE"))) continue;
     result.expired++;
     const msg = `Order for "${t.listing.title}" was not paid within ${PAY_WITHIN_HOURS} hours, so it was cancelled and the stock released.`;
     await notify(t.buyerBusinessId, "ORDER_STATUS_CHANGED", "Order cancelled: not paid in time", msg, `/dashboard/orders/${t.id}`);
@@ -104,6 +105,7 @@ export async function runOrderTimers(now = new Date()) {
     );
   }
 
+  result.buyRequestsExpired = await expireBuyOrders(now);
   return result;
 }
 

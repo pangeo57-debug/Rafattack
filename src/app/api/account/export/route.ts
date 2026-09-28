@@ -19,7 +19,7 @@ export async function GET() {
     return NextResponse.json({ error: "Too many exports. Please try again in an hour." }, { status: 429 });
   }
 
-  const [business, users, listings, offersMade, offersReceived, purchases, sales, reviewsGiven, reviewsReceived, savedSearches, notifications, reportsFiled] =
+  const [business, users, listings, offersMade, offersReceived, purchases, sales, reviewsGiven, reviewsReceived, savedSearches, notifications, reportsFiled, buyRequests] =
     await Promise.all([
       prisma.business.findUniqueOrThrow({ where: { id: businessId } }),
       prisma.user.findMany({
@@ -42,6 +42,7 @@ export async function GET() {
         where: { reporterUserId: session.user.id },
         select: { listingId: true, reason: true, explanation: true, status: true, decisionNote: true, createdAt: true },
       }),
+      prisma.buyOrder.findMany({ where: { buyerBusinessId: businessId } }),
     ]);
 
   const exportedAt = new Date();
@@ -61,6 +62,7 @@ export async function GET() {
       savedSearches,
       notifications,
       reportsFiled,
+      buyRequests,
     },
     null,
     2

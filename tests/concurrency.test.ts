@@ -14,10 +14,8 @@ describe("no double sale: the last item goes to exactly one buyer", () => {
     const listing = await makeListing(seller.business.id, { quantityAvailable: 1 });
 
     // Both requests read the listing (qty 1) before either writes.
-    actAs(buyerA);
-    const a = call(createOffer, { body: { listingId: listing.id, offeredPrice: 18, quantity: 1, buyNow: true } });
-    actAs(buyerB);
-    const b = call(createOffer, { body: { listingId: listing.id, offeredPrice: 18, quantity: 1, buyNow: true } });
+    const a = call(createOffer, { body: { listingId: listing.id, offeredPrice: 18, quantity: 1, buyNow: true }, as: buyerA });
+    const b = call(createOffer, { body: { listingId: listing.id, offeredPrice: 18, quantity: 1, buyNow: true }, as: buyerB });
     const results = await Promise.all([a, b]);
 
     expect(results.map((r) => r.status).sort()).toEqual([201, 409]);

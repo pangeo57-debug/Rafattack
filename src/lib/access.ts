@@ -36,3 +36,9 @@ export async function findTransactionAsParty(id: string, businessId: string) {
   const isBuyer = transaction.buyerBusinessId === businessId;
   return isSeller || isBuyer ? { transaction, isSeller, isBuyer } : null;
 }
+
+/** A buy request, only for the business that placed it. */
+export async function findOwnBuyOrder(id: string, businessId: string) {
+  const bid = await prisma.buyOrder.findUnique({ where: { id } });
+  return bid && bid.buyerBusinessId === businessId ? bid : null;
+}

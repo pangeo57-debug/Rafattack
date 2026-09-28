@@ -45,6 +45,10 @@ export async function DELETE() {
       where: { buyerBusinessId: businessId, status: { in: ["PENDING", "COUNTERED"] } },
       data: { status: "WITHDRAWN" },
     });
+    await tx.buyOrder.updateMany({
+      where: { buyerBusinessId: businessId, status: { in: ["ACTIVE", "PAUSED"] } },
+      data: { status: "CANCELLED" },
+    });
 
     for (const user of users) {
       const unusableHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10);

@@ -48,6 +48,10 @@ export async function PATCH(
       where: { buyerBusinessId: id, status: { in: ["PENDING", "COUNTERED"] } },
       data: { status: "WITHDRAWN" },
     });
+    await prisma.buyOrder.updateMany({
+      where: { buyerBusinessId: id, status: { in: ["ACTIVE", "PAUSED"] } },
+      data: { status: "CANCELLED" },
+    });
   }
 
   await notify(
