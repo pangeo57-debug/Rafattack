@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { cleanImages, ImageRejected } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { listingSchema } from "@/lib/validators";
 import { isBusinessSuspended } from "@/lib/session";
@@ -64,11 +65,19 @@ export async function PATCH(
   }
   const data = parsed.data;
 
+  let photos: string[] | undefined;
+  try {
+    photos = data.photos ? await cleanImages(data.photos) : undefined;
+  } catch (err) {
+    if (err instanceof ImageRejected) return NextResponse.json({ error: err.message }, { status: 400 });
+    throw err;
+  }
+
   const updated = await prisma.listing.update({
     where: { id },
     data: {
       ...data,
-      photos: data.photos ? JSON.stringify(data.photos) : undefined,
+      photos: photos ? JSON.stringify(photos) : undefined,
       expiresAt: data.expiresAt ? new Date(data.expiresAt) : undefined,
     },
   });

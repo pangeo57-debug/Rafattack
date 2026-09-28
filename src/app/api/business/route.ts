@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { cleanImages, ImageRejected } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notify";
 
@@ -31,10 +32,15 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (Array.isArray(body.verificationDocuments)) {
-    const documents = body.verificationDocuments
-      .filter((d: unknown): d is string => typeof d === "string" && d.length <= 3_000_000)
-      .slice(0, 2);
-    data.verificationDocuments = JSON.stringify(documents);
+    if (body.verificationDocuments.length > 2) {
+      return NextResponse.json({ error: "Upload at most 2 documents." }, { status: 400 });
+    }
+    try {
+      data.verificationDocuments = JSON.stringify(await cleanImages(body.verificationDocuments));
+    } catch (err) {
+      if (err instanceof ImageRejected) return NextResponse.json({ error: err.message }, { status: 400 });
+      throw err;
+    }
   }
 
   // The "Verified" badge vouches for this name and tax ID. Changing either

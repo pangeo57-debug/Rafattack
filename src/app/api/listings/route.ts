@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { cleanImages, ImageRejected } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { listingSchema } from "@/lib/validators";
 import { notifyMatchingSavedSearches } from "@/lib/notify";
@@ -67,13 +68,21 @@ export async function POST(req: NextRequest) {
   }
   const data = parsed.data;
 
+  let photos: string[];
+  try {
+    photos = await cleanImages(data.photos ?? []);
+  } catch (err) {
+    if (err instanceof ImageRejected) return NextResponse.json({ error: err.message }, { status: 400 });
+    throw err;
+  }
+
   const listing = await prisma.listing.create({
     data: {
       sellerBusinessId: session.user.businessId,
       title: data.title,
       description: data.description,
       category: data.category,
-      photos: JSON.stringify(data.photos ?? []),
+      photos: JSON.stringify(photos),
       quantityAvailable: data.quantityAvailable,
       unit: data.unit,
       condition: data.condition,
