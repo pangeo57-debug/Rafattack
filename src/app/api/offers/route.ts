@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { offerSchema } from "@/lib/validators";
 import { notify } from "@/lib/notify";
-import { acceptOfferAndCreateTransaction } from "@/lib/offers";
+import { acceptOfferAndCreateTransaction, InsufficientStockError } from "@/lib/offers";
 import { isBusinessSuspended } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
@@ -64,11 +64,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not enough quantity available." }, { status: 400 });
   }
 
+  // "Buy now" is an instant sale with no seller in the loop, so it must be at
+  // the seller's own asking price — never a price sent by the browser.
+  const price = buyNow ? listing.askingPrice : data.offeredPrice;
+
   const offer = await prisma.offer.create({
     data: {
       listingId: data.listingId,
       buyerBusinessId: session.user.businessId,
-      offeredPrice: data.offeredPrice,
+      offeredPrice: price,
       quantity: data.quantity,
       message: data.message,
       status: "PENDING",
@@ -76,13 +80,16 @@ export async function POST(req: NextRequest) {
   });
 
   if (buyNow) {
-    const transaction = await acceptOfferAndCreateTransaction(
-      offer,
-      listing,
-      data.offeredPrice,
-      data.quantity
-    );
-    return NextResponse.json({ offer, transaction }, { status: 201 });
+    try {
+      const transaction = await acceptOfferAndCreateTransaction(offer, listing, price, data.quantity);
+      return NextResponse.json({ offer, transaction }, { status: 201 });
+    } catch (err) {
+      if (err instanceof InsufficientStockError) {
+        await prisma.offer.update({ where: { id: offer.id }, data: { status: "WITHDRAWN" } });
+        return NextResponse.json({ error: err.message }, { status: 409 });
+      }
+      throw err;
+    }
   }
 
   await notify(

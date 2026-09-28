@@ -47,6 +47,23 @@ export async function POST(
   }
 
   const stripe = requireStripe();
+
+  // One payable checkout per order at a time. If the buyer already has one
+  // open (double click, second tab, came back later), send them to that
+  // same page instead of creating a second one they could also pay.
+  if (transaction.stripeCheckoutSessionId) {
+    const existing = await stripe.checkout.sessions.retrieve(transaction.stripeCheckoutSessionId);
+    if (existing.status === "open" && existing.url) {
+      return NextResponse.json({ url: existing.url });
+    }
+    if (existing.status === "complete") {
+      return NextResponse.json(
+        { error: "Your payment is already being processed for this order." },
+        { status: 409 }
+      );
+    }
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const amountCents = Math.round(transaction.amount * 100);
 
@@ -80,6 +97,11 @@ export async function POST(
     metadata: { transactionId: transaction.id },
     success_url: `${appUrl}/dashboard/orders/${transaction.id}?checkout=success`,
     cancel_url: `${appUrl}/dashboard/orders/${transaction.id}?checkout=cancelled`,
+  }, {
+    // Two simultaneous first clicks both see "no session yet" above; the same
+    // key makes Stripe hand both of them the same session rather than two.
+    // Keyed on the previous (expired) session so a genuine retry still works.
+    idempotencyKey: `checkout-${transaction.id}-${transaction.stripeCheckoutSessionId ?? "first"}`,
   });
 
   await prisma.transaction.update({

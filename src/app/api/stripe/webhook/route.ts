@@ -7,21 +7,45 @@ import type Stripe from "stripe";
 async function markPaid(session: Stripe.Checkout.Session) {
   const transactionId = session.metadata?.transactionId;
   if (!transactionId) return;
+  const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
 
-  const transaction = await prisma.transaction.findUnique({ where: { id: transactionId } });
-  if (!transaction || transaction.orderStatus !== "AWAITING_PAYMENT") return;
-
-  await prisma.transaction.update({
-    where: { id: transactionId },
+  // Atomic claim: only one delivery of one payment can move the order to
+  // PAID. A read-then-write here let two concurrent (or duplicate) webhook
+  // deliveries both pass the check.
+  const claimed = await prisma.transaction.updateMany({
+    where: { id: transactionId, orderStatus: "AWAITING_PAYMENT" },
     data: {
       orderStatus: "PAID",
       paymentStatus: "AUTHORIZED",
       escrowStatus: "HOLDING",
       paidAt: new Date(),
-      stripePaymentIntentId:
-        typeof session.payment_intent === "string" ? session.payment_intent : undefined,
+      stripePaymentIntentId: paymentIntentId,
     },
   });
+
+  if (claimed.count === 0) {
+    // Either a repeat delivery of the payment we already recorded (nothing to
+    // do), or a *different* payment for an order that is already paid or was
+    // cancelled — e.g. a slow SEPA transfer that landed after the buyer also
+    // paid by card. That money must go back, not sit silently in our balance.
+    const current = await prisma.transaction.findUnique({ where: { id: transactionId } });
+    if (current && paymentIntentId && current.stripePaymentIntentId !== paymentIntentId) {
+      await requireStripe().refunds.create(
+        { payment_intent: paymentIntentId },
+        { idempotencyKey: `refund-duplicate-${paymentIntentId}` }
+      );
+      await notify(
+        current.buyerBusinessId,
+        "ORDER_STATUS_CHANGED",
+        "Duplicate payment refunded",
+        "We received a second payment for an order that was already paid or cancelled, so we refunded it automatically.",
+        `/dashboard/orders/${transactionId}`
+      );
+    }
+    return;
+  }
+
+  const transaction = await prisma.transaction.findUniqueOrThrow({ where: { id: transactionId } });
   await notify(
     transaction.sellerBusinessId,
     "PAYMENT_RECEIVED",
@@ -42,13 +66,12 @@ async function markPaymentFailed(session: Stripe.Checkout.Session) {
   const transactionId = session.metadata?.transactionId;
   if (!transactionId) return;
 
-  const transaction = await prisma.transaction.findUnique({ where: { id: transactionId } });
-  if (!transaction || transaction.orderStatus !== "AWAITING_PAYMENT") return;
-
-  await prisma.transaction.update({
-    where: { id: transactionId },
+  const updated = await prisma.transaction.updateMany({
+    where: { id: transactionId, orderStatus: "AWAITING_PAYMENT", paymentStatus: { not: "FAILED" } },
     data: { paymentStatus: "FAILED" },
   });
+  if (updated.count === 0) return;
+  const transaction = await prisma.transaction.findUniqueOrThrow({ where: { id: transactionId } });
   await notify(
     transaction.buyerBusinessId,
     "ORDER_STATUS_CHANGED",
