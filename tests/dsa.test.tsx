@@ -43,7 +43,7 @@ async function setup() {
   const buyer = await makeBusiness();
   const listing = await makeListing(seller.business.id);
   const offer = await prisma.offer.create({
-    data: { listingId: listing.id, buyerBusinessId: buyer.business.id, offeredPrice: 15, quantity: 5 },
+    data: { listingId: listing.id, buyerBusinessId: buyer.business.id, offeredPriceCents: 1500, quantity: 5 },
   });
   const admin = await makeAdmin();
   return { seller, buyer, listing, offer, admin };

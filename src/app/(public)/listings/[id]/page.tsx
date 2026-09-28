@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
+import { ui, badgeColor, formatDate } from "@/lib/ui";
 import { LISTING_CONDITIONS, FULFILLMENT_TYPES } from "@/lib/constants";
 import OfferBox from "@/components/OfferBox";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -22,12 +22,12 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await prisma.listing.findUnique({
     where: { id },
-    select: { title: true, description: true, askingPrice: true, category: true, status: true },
+    select: { title: true, description: true, askingPriceCents: true, category: true, status: true },
   });
   if (!listing || listing.status === "REMOVED") return {};
 
   const title = `${listing.title} — Surplo`;
-  const description = `${formatMoney(listing.askingPrice)} · ${listing.category} · ${listing.description.slice(0, 140)}`;
+  const description = `${formatCents(listing.askingPriceCents)} · ${listing.category} · ${listing.description.slice(0, 140)}`;
   return {
     title,
     description,
@@ -166,13 +166,13 @@ export default async function ListingDetailPage({
 
         <div>
           <p className="text-3xl font-semibold text-zinc-900">
-            {formatMoney(listing.askingPrice)}
+            {formatCents(listing.askingPriceCents)}
             <span className="ml-1 text-base font-normal text-zinc-500">
               / {listing.unit === "ITEM" ? "item" : "lot"}
             </span>
           </p>
-          {listing.originalPrice > listing.askingPrice && (
-            <p className="text-sm text-zinc-400 line-through">{formatMoney(listing.originalPrice)}</p>
+          {listing.originalPriceCents > listing.askingPriceCents && (
+            <p className="text-sm text-zinc-400 line-through">{formatCents(listing.originalPriceCents)}</p>
           )}
 
           {listing.sellerBusiness.verificationStatus === "VERIFIED" ? (
@@ -211,7 +211,7 @@ export default async function ListingDetailPage({
             ) : (
               <OfferBox
                 listingId={listing.id}
-                askingPrice={listing.askingPrice}
+                askingPriceCents={listing.askingPriceCents}
                 minOrderQty={listing.minOrderQty}
                 quantityAvailable={listing.quantityAvailable}
               />

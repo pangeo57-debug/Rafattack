@@ -202,8 +202,9 @@ model Listing {
   unit              ListingUnit      @default(ITEM)
   condition         ListingCondition @default(NEW)
 
-  originalPrice Float
-  askingPrice   Float
+  // Money in integer cents (EUR). Never floats.
+  originalPriceCents Int
+  askingPriceCents   Int
   minOrderQty   Int   @default(1)
 
   fulfillment     FulfillmentType @default(BOTH)
@@ -234,13 +235,13 @@ model Offer {
   buyerBusinessId String
   buyerBusiness   Business @relation("BuyerOffers", fields: [buyerBusinessId], references: [id])
 
-  offeredPrice Float
+  offeredPriceCents Int
   quantity     Int
   message      String?
 
   status OfferStatus @default(PENDING)
 
-  counterPrice    Float?
+  counterPriceCents Int?
   counterQuantity Int?
   counterMessage  String?
 
@@ -278,12 +279,15 @@ model Transaction {
   buyerBusiness   Business @relation("BuyerTransactions", fields: [buyerBusinessId], references: [id])
 
   quantity  Int
-  unitPrice Float
-  amount    Float
+  // Money in integer cents; commission in basis points (800 = 8%).
+  // amountCents = unitPriceCents * quantity and
+  // commissionCents + sellerPayoutCents = amountCents (DB check constraints).
+  unitPriceCents Int
+  amountCents    Int
 
-  commissionRate     Float
-  commissionAmount   Float
-  sellerPayoutAmount Float
+  commissionBps     Int
+  commissionCents   Int
+  sellerPayoutCents Int
 
   paymentStatus PaymentStatus @default(PENDING)
   escrowStatus  EscrowStatus  @default(NONE)
@@ -346,8 +350,8 @@ model SavedSearch {
   keyword  String?
   category String?
   location String?
-  minPrice Float?
-  maxPrice Float?
+  minPriceCents Int?
+  maxPriceCents Int?
 
   createdAt DateTime @default(now())
 
@@ -373,7 +377,7 @@ model Notification {
 
 model PlatformSetting {
   id                String   @id @default("singleton")
-  commissionPercent Float    @default(8)
+  commissionBps Int      @default(800) // basis points: 800 = 8%
   updatedAt         DateTime @updatedAt
 }
 

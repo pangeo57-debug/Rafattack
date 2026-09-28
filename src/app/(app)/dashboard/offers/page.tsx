@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Handshake } from "lucide-react";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
+import { ui, badgeColor, formatDate } from "@/lib/ui";
 import { OFFER_STATUS_LABELS } from "@/lib/constants";
 import OfferActions from "@/components/OfferActions";
 
@@ -73,12 +74,12 @@ export default async function OffersPage({
                     <p className="text-sm text-zinc-500">from {o.buyerBusiness.name}</p>
                   )}
                   <p className="mt-1 text-sm text-zinc-700">
-                    {o.quantity} &times; {formatMoney(o.offeredPrice)} = {formatMoney(o.offeredPrice * o.quantity)}
+                    {o.quantity} &times; {formatCents(o.offeredPriceCents)} = {formatCents(o.offeredPriceCents * o.quantity)}
                   </p>
                   {o.message && <p className="mt-1 text-sm text-zinc-500">&ldquo;{o.message}&rdquo;</p>}
                   {o.status === "COUNTERED" && (
                     <p className="mt-1 text-sm text-sky-700">
-                      Counter: {o.counterQuantity} &times; {formatMoney(o.counterPrice ?? 0)}
+                      Counter: {o.counterQuantity} &times; {formatCents(o.counterPriceCents ?? 0)}
                       {o.counterMessage ? ` — "${o.counterMessage}"` : ""}
                     </p>
                   )}

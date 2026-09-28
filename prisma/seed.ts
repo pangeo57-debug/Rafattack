@@ -7,7 +7,7 @@ async function main() {
   await prisma.platformSetting.upsert({
     where: { id: "singleton" },
     update: {},
-    create: { id: "singleton", commissionPercent: 8 },
+    create: { id: "singleton", commissionBps: 800 }, // 8%
   });
 
   const adminEmail = "admin@surplo.test";
@@ -59,8 +59,8 @@ async function main() {
         quantityAvailable: 200,
         unit: "ITEM",
         condition: "NEW",
-        originalPrice: 65,
-        askingPrice: 18,
+        originalPriceCents: 6500,
+        askingPriceCents: 1800,
         minOrderQty: 25,
         fulfillment: "BOTH",
         locationCity: "Columbus",

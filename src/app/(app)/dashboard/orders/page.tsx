@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ShoppingBag, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
+import { ui, badgeColor, formatDate } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 
 export default async function OrdersPage() {
@@ -46,7 +47,7 @@ export default async function OrdersPage() {
                   <p className="text-sm text-zinc-500">
                     {isSeller ? "Selling to" : "Buying from"}{" "}
                     {isSeller ? t.buyerBusiness.name : t.sellerBusiness.name} &middot;{" "}
-                    {formatMoney(t.amount)} &middot; {formatDate(t.createdAt)}
+                    {formatCents(t.amountCents)} &middot; {formatDate(t.createdAt)}
                   </p>
                 </div>
               </div>

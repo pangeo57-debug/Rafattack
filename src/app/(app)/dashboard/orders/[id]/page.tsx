@@ -3,10 +3,11 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { formatCents } from "@/lib/money";
 import { findTransactionAsParty } from "@/lib/access";
 import { buyerBillingForSeller } from "@/lib/invoicing";
 import { deadlineFor } from "@/lib/order-timers";
-import { ui, badgeColor, formatMoney, formatDateTime } from "@/lib/ui";
+import { ui, badgeColor, formatDateTime } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import PayButton from "@/components/PayButton";
 import OrderActions from "@/components/OrderActions";
@@ -79,19 +80,19 @@ export default async function OrderDetailPage({
           </div>
           <div>
             <dt className="text-zinc-400">Unit price</dt>
-            <dd className="text-zinc-800">{formatMoney(transaction.unitPrice)}</dd>
+            <dd className="text-zinc-800">{formatCents(transaction.unitPriceCents)}</dd>
           </div>
           <div>
             <dt className="text-zinc-400">Order total</dt>
-            <dd className="text-zinc-800">{formatMoney(transaction.amount)}</dd>
+            <dd className="text-zinc-800">{formatCents(transaction.amountCents)}</dd>
           </div>
           <div>
-            <dt className="text-zinc-400">Platform commission ({transaction.commissionRate}%)</dt>
-            <dd className="text-zinc-800">{formatMoney(transaction.commissionAmount)}</dd>
+            <dt className="text-zinc-400">Platform commission ({transaction.commissionBps / 100}%)</dt>
+            <dd className="text-zinc-800">{formatCents(transaction.commissionCents)}</dd>
           </div>
           <div>
             <dt className="text-zinc-400">Seller payout</dt>
-            <dd className="text-zinc-800">{formatMoney(transaction.sellerPayoutAmount)}</dd>
+            <dd className="text-zinc-800">{formatCents(transaction.sellerPayoutCents)}</dd>
           </div>
           <div>
             <dt className="text-zinc-400">Escrow status</dt>

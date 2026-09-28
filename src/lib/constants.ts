@@ -1,3 +1,4 @@
+import { parseEuroToCents } from "@/lib/money";
 export const BUSINESS_TYPES = [
   { value: "RETAILER", label: "Retailer" },
   { value: "RESELLER", label: "Reseller" },
@@ -39,9 +40,17 @@ export const FULFILLMENT_TYPES = [
   { value: "BOTH", label: "Pickup or shipping" },
 ] as const;
 
-export const DEFAULT_COMMISSION_PERCENT = Number(
-  process.env.PLATFORM_COMMISSION_PERCENT ?? 8
-);
+/**
+ * Commission when none is set in admin settings, in basis points (800 = 8%),
+ * from PLATFORM_COMMISSION_PERCENT (e.g. "8" or "7.5"). A value that isn't a
+ * percentage stops the app at start-up rather than charging a wrong rate.
+ */
+export const DEFAULT_COMMISSION_BPS = (() => {
+  const raw = process.env.PLATFORM_COMMISSION_PERCENT ?? "8";
+  const bps = parseEuroToCents(raw); // same "up to 2 decimals" parsing: 7.5 -> 750
+  if (bps === null || bps > 10000) throw new Error(`PLATFORM_COMMISSION_PERCENT must be a percentage like 8 or 7.5, got "${raw}"`);
+  return bps;
+})();
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   AWAITING_PAYMENT: "Awaiting payment",

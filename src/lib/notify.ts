@@ -17,7 +17,7 @@ export async function notifyMatchingSavedSearches(listing: {
   id: string;
   title: string;
   category: string;
-  askingPrice: number;
+  askingPriceCents: number;
   locationCity: string;
   locationCountry: string;
   sellerBusinessId: string;
@@ -28,8 +28,8 @@ export async function notifyMatchingSavedSearches(listing: {
 
   const matches = searches.filter((s) => {
     if (s.category && s.category !== listing.category) return false;
-    if (s.minPrice != null && listing.askingPrice < s.minPrice) return false;
-    if (s.maxPrice != null && listing.askingPrice > s.maxPrice) return false;
+    if (s.minPriceCents != null && listing.askingPriceCents < s.minPriceCents) return false;
+    if (s.maxPriceCents != null && listing.askingPriceCents > s.maxPriceCents) return false;
     if (s.keyword && !listing.title.toLowerCase().includes(s.keyword.toLowerCase()))
       return false;
     if (

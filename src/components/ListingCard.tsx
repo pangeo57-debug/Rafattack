@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Package, MapPin, BadgeCheck } from "lucide-react";
-import { ui, formatMoney } from "@/lib/ui";
+import { ui } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
 
 type ListingCardData = {
   id: string;
   title: string;
   category: string;
-  askingPrice: number;
-  originalPrice?: number;
+  askingPriceCents: number;
+  originalPriceCents?: number;
   unit: string;
   locationCity: string;
   locationCountry: string;
@@ -19,8 +20,8 @@ type ListingCardData = {
 
 export default function ListingCard({ listing }: { listing: ListingCardData }) {
   const discount =
-    listing.originalPrice && listing.originalPrice > listing.askingPrice
-      ? Math.round((1 - listing.askingPrice / listing.originalPrice) * 100)
+    listing.originalPriceCents && listing.originalPriceCents > listing.askingPriceCents
+      ? Math.round((1 - listing.askingPriceCents / listing.originalPriceCents) * 100)
       : null;
 
   return (
@@ -57,13 +58,13 @@ export default function ListingCard({ listing }: { listing: ListingCardData }) {
           </p>
         )}
         <p className="mt-3 text-lg font-semibold text-zinc-900">
-          {formatMoney(listing.askingPrice)}
+          {formatCents(listing.askingPriceCents)}
           <span className="ml-1 text-sm font-normal text-zinc-500">
             / {listing.unit === "ITEM" ? "item" : "lot"}
           </span>
-          {listing.originalPrice && listing.originalPrice > listing.askingPrice && (
+          {listing.originalPriceCents && listing.originalPriceCents > listing.askingPriceCents && (
             <span className="ml-2 text-sm font-normal text-zinc-400 line-through">
-              {formatMoney(listing.originalPrice)}
+              {formatCents(listing.originalPriceCents)}
             </span>
           )}
         </p>

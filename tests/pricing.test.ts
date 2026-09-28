@@ -7,7 +7,7 @@ describe("the server decides the price, never the browser", () => {
   it("'Buy now' charges the listing's asking price even if the browser sends a lower one", async () => {
     const seller = await makeBusiness();
     const buyer = await makeBusiness();
-    const listing = await makeListing(seller.business.id, { askingPrice: 18, quantityAvailable: 100 });
+    const listing = await makeListing(seller.business.id, { askingPriceCents: 1800, quantityAvailable: 100 });
 
     actAs(buyer);
     const res = await call(createOffer, {
@@ -16,7 +16,7 @@ describe("the server decides the price, never the browser", () => {
 
     expect(res.status).toBe(201);
     const tx = await prisma.transaction.findFirstOrThrow({ where: { listingId: listing.id } });
-    expect(tx.unitPrice).toBe(18);
-    expect(tx.amount).toBe(1800);
+    expect(tx.unitPriceCents).toBe(1800);
+    expect(tx.amountCents).toBe(180000);
   });
 });

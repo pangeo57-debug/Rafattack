@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCommissionPercent, computeAmounts } from "@/lib/commission";
+import { getCommissionBps, computeAmounts } from "@/lib/commission";
 import { notify } from "@/lib/notify";
 import type { Offer, Listing } from "@prisma/client";
 import { recordCreated, type Actor } from "@/lib/order-status";
@@ -21,23 +21,19 @@ export class BuyOrderUnavailableError extends Error {
 export async function acceptOfferAndCreateTransaction(
   offer: Offer,
   listing: Listing,
-  finalPrice: number,
+  finalPriceCents: number,
   finalQuantity: number,
   opts: { by: Actor; reason: string; buyOrderId?: string }
 ) {
-  const commissionPercent = await getCommissionPercent();
-  const { amount, commissionAmount, sellerPayoutAmount } = computeAmounts(
-    finalPrice,
-    finalQuantity,
-    commissionPercent
-  );
+  const commissionBps = await getCommissionBps();
+  const { amountCents, commissionCents, sellerPayoutCents } = computeAmounts(finalPriceCents, finalQuantity, commissionBps);
 
   const transaction = await prisma.$transaction(async (tx) => {
     await tx.offer.update({
       where: { id: offer.id },
       data: {
         status: "ACCEPTED",
-        offeredPrice: finalPrice,
+        offeredPriceCents: finalPriceCents,
         quantity: finalQuantity,
       },
     });
@@ -85,11 +81,11 @@ export async function acceptOfferAndCreateTransaction(
         sellerBusinessId: listing.sellerBusinessId,
         buyerBusinessId: offer.buyerBusinessId,
         quantity: finalQuantity,
-        unitPrice: finalPrice,
-        amount,
-        commissionRate: commissionPercent,
-        commissionAmount,
-        sellerPayoutAmount,
+        unitPriceCents: finalPriceCents,
+        amountCents,
+        commissionBps,
+        commissionCents,
+        sellerPayoutCents,
       },
     });
     await recordCreated(tx, created.id, opts.by, opts.reason);

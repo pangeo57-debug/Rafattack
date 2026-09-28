@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Package, PackagePlus } from "lucide-react";
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, badgeColor, formatMoney } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
+import { ui, badgeColor } from "@/lib/ui";
 import ListingStatusActions from "@/components/ListingStatusActions";
 
 export default async function MyListingsPage() {
@@ -38,7 +39,7 @@ export default async function MyListingsPage() {
                   <span className={`${ui.badge} ${badgeColor(l.status)}`}>{l.status}</span>
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {formatMoney(l.askingPrice)} / {l.unit === "ITEM" ? "item" : "lot"} &middot; Qty{" "}
+                  {formatCents(l.askingPriceCents)} / {l.unit === "ITEM" ? "item" : "lot"} &middot; Qty{" "}
                   {l.quantityAvailable}
                 </p>
               </div>

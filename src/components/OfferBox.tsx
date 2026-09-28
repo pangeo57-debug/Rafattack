@@ -2,22 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ui, formatMoney } from "@/lib/ui";
+import { ui } from "@/lib/ui";
+import { formatCents, parseEuroToCents } from "@/lib/money";
 
 export default function OfferBox({
   listingId,
-  askingPrice,
+  askingPriceCents,
   minOrderQty,
   quantityAvailable,
 }: {
   listingId: string;
-  askingPrice: number;
+  askingPriceCents: number;
   minOrderQty: number;
   quantityAvailable: number;
 }) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(minOrderQty);
-  const [offeredPrice, setOfferedPrice] = useState(askingPrice);
+  // Kept as the text the buyer typed; the server turns it into cents.
+  const [offeredPrice, setOfferedPrice] = useState((askingPriceCents / 100).toFixed(2));
+  const offeredCents = parseEuroToCents(offeredPrice);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState<"buy" | "offer" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +33,8 @@ export default function OfferBox({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         listingId,
-        offeredPrice: buyNow ? askingPrice : offeredPrice,
+        // Buy now: the server charges the listing's own price whatever is sent here.
+        offeredPrice: buyNow ? (askingPriceCents / 100).toFixed(2) : offeredPrice,
         quantity,
         message,
         buyNow,
@@ -49,7 +53,6 @@ export default function OfferBox({
     }
   }
 
-  const total = offeredPrice * quantity;
 
   return (
     <div className={`${ui.card} p-4`}>
@@ -68,11 +71,9 @@ export default function OfferBox({
       <div className="mt-3">
         <label className={ui.label}>Your offer price (per unit)</label>
         <input
-          type="number"
-          step="0.01"
-          min={0}
+          inputMode="decimal"
           value={offeredPrice}
-          onChange={(e) => setOfferedPrice(Number(e.target.value))}
+          onChange={(e) => setOfferedPrice(e.target.value)}
           className={ui.input}
         />
       </div>
@@ -86,7 +87,7 @@ export default function OfferBox({
         />
       </div>
       <p className="mt-3 text-sm text-zinc-500">
-        Offer total: <span className="font-medium text-zinc-900">{formatMoney(total || 0)}</span>
+        Offer total: <span className="font-medium text-zinc-900">{offeredCents !== null ? formatCents(offeredCents * (quantity || 0)) : "enter a price like 18.50"}</span>
       </p>
       <div className="mt-4 flex flex-col gap-2">
         <button
@@ -95,7 +96,7 @@ export default function OfferBox({
           onClick={() => submit(true)}
           className={ui.btnPrimary}
         >
-          {loading === "buy" ? "Processing..." : `Buy now at ${formatMoney(askingPrice)}/unit`}
+          {loading === "buy" ? "Processing..." : `Buy now at ${formatCents(askingPriceCents)}/unit`}
         </button>
         <button
           type="button"

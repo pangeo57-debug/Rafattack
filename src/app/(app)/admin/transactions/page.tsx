@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
+import { ui, badgeColor, formatDate } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 
 export default async function AdminTransactionsPage() {
@@ -31,7 +32,7 @@ export default async function AdminTransactionsPage() {
                 <Link href={`/dashboard/orders/${m.transactionId}`} className="underline">{m.transaction.listing.title}</Link>
                 {" · "}
                 {m.kind === "SELLER_PAYOUT" ? "Payout to seller" : "Refund to buyer"}
-                {m.amountCents ? ` ${formatMoney(m.amountCents / 100)}` : " (full)"} · {m.status === "FAILED" ? "FAILED, gave up" : "retrying"} after{" "}
+                {m.amountCents ? ` ${formatCents(m.amountCents)}` : " (full)"} · {m.status === "FAILED" ? "FAILED, gave up" : "retrying"} after{" "}
                 {m.attempts} attempt{m.attempts === 1 ? "" : "s"}: {m.lastError}
               </li>
             ))}
@@ -61,8 +62,8 @@ export default async function AdminTransactionsPage() {
                 </td>
                 <td className="px-4 py-2">{t.sellerBusiness.name}</td>
                 <td className="px-4 py-2">{t.buyerBusiness.name}</td>
-                <td className="px-4 py-2">{formatMoney(t.amount)}</td>
-                <td className="px-4 py-2">{formatMoney(t.commissionAmount)}</td>
+                <td className="px-4 py-2">{formatCents(t.amountCents)}</td>
+                <td className="px-4 py-2">{formatCents(t.commissionCents)}</td>
                 <td className="px-4 py-2">
                   <span className={`${ui.badge} ${badgeColor(t.orderStatus)}`}>
                     {ORDER_STATUS_LABELS[t.orderStatus] ?? t.orderStatus}

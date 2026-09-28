@@ -124,20 +124,20 @@ export async function fillBuyOrder(input: { buyOrderId: string; listingId: strin
     throw new FillError(`Sell between ${minQty} and ${match.qty} units to this buyer.`, 400);
   }
 
-  const unitPrice = bid.maxUnitPriceCents / 100;
+  const unitPriceCents = bid.maxUnitPriceCents;
   const offer = await prisma.offer.create({
     data: {
       listingId: listing.id,
       buyerBusinessId: bid.buyerBusinessId,
       buyOrderId: bid.id,
-      offeredPrice: unitPrice,
+      offeredPriceCents: unitPriceCents,
       quantity: qty,
       message: "Sold to your standing buy request.",
       status: "PENDING",
     },
   });
   try {
-    return await acceptOfferAndCreateTransaction(offer, listing, unitPrice, qty, {
+    return await acceptOfferAndCreateTransaction(offer, listing, unitPriceCents, qty, {
       buyOrderId: bid.id,
       by: { actor: "SELLER", userId: input.sellerUserId ?? null },
       reason: "Seller sold to the buyer's standing buy request",

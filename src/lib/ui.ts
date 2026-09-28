@@ -46,11 +46,6 @@ export function badgeColor(status: string) {
   return map[status] ?? "bg-zinc-100 text-zinc-600 ring-zinc-500/20";
 }
 
-export function formatMoney(amount: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(
-    amount
-  );
-}
 
 /** Date and time for deadlines. Stored in UTC; shown in Greek time with the
  * zone printed, so nobody has to guess which clock a deadline is on. */

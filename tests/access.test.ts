@@ -19,12 +19,12 @@ async function world() {
   const stranger = await makeBusiness();
   const listing = await makeListing(seller.business.id);
   const offer = await prisma.offer.create({
-    data: { listingId: listing.id, buyerBusinessId: buyer.business.id, offeredPrice: 18, quantity: 5 },
+    data: { listingId: listing.id, buyerBusinessId: buyer.business.id, offeredPriceCents: 1800, quantity: 5 },
   });
   const tx = await prisma.transaction.create({
     data: {
       offerId: offer.id, listingId: listing.id, sellerBusinessId: seller.business.id, buyerBusinessId: buyer.business.id,
-      quantity: 5, unitPrice: 18, amount: 90, commissionRate: 8, commissionAmount: 7.2, sellerPayoutAmount: 82.8,
+      quantity: 5, unitPriceCents: 1800, amountCents: 9000, commissionBps: 800, commissionCents: 720, sellerPayoutCents: 8280,
       orderStatus: "COMPLETED",
     },
   });

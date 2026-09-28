@@ -1,4 +1,20 @@
 import { z } from "zod";
+import { parseEuroToCents } from "@/lib/money";
+
+/**
+ * A price typed by a person in euros ("18", "18.5", "18,50") → integer cents.
+ * Parsed from the text, never through a float. At least 1 cent, at most
+ * €10 million.
+ */
+export const euros = (label = "Price") =>
+  z.union([z.string(), z.number()]).transform((v, ctx) => {
+    const cents = parseEuroToCents(v);
+    if (cents === null || cents < 1 || cents > 1_000_000_000) {
+      ctx.addIssue({ code: "custom", message: `${label}: enter an amount in euros like 18.50` });
+      return z.NEVER;
+    }
+    return cents;
+  });
 
 export const signupSchema = z.object({
   name: z.string().min(2, "Your name is required"),
@@ -24,7 +40,7 @@ export const signupSchema = z.object({
   }),
 });
 
-export const listingSchema = z.object({
+const listingFields = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
   category: z.string().min(1),
@@ -32,8 +48,8 @@ export const listingSchema = z.object({
   quantityAvailable: z.coerce.number().int().positive(),
   unit: z.enum(["ITEM", "LOT"]),
   condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR", "CUSTOMER_RETURNS"]),
-  originalPrice: z.coerce.number().positive(),
-  askingPrice: z.coerce.number().positive(),
+  originalPrice: euros("Original price"),
+  askingPrice: euros("Asking price"),
   minOrderQty: z.coerce.number().int().positive().default(1),
   fulfillment: z.enum(["PICKUP", "SHIPPING", "BOTH"]),
   locationCity: z.string().min(1),
@@ -41,16 +57,31 @@ export const listingSchema = z.object({
   expiresAt: z.string().optional().nullable(),
 });
 
+type ListingFields = Partial<z.infer<typeof listingFields>>;
+// Prices come in as euros from the form and leave as the database's cents fields.
+const toCents = <T extends ListingFields>({ originalPrice, askingPrice, ...rest }: T) => ({
+  ...rest,
+  ...(originalPrice !== undefined ? { originalPriceCents: originalPrice } : {}),
+  ...(askingPrice !== undefined ? { askingPriceCents: askingPrice } : {}),
+});
+
+export const listingSchema = listingFields.transform(({ originalPrice, askingPrice, ...rest }) => ({
+  ...rest,
+  originalPriceCents: originalPrice,
+  askingPriceCents: askingPrice,
+}));
+export const listingUpdateSchema = listingFields.partial().transform(toCents);
+
 export const offerSchema = z.object({
   listingId: z.string(),
-  offeredPrice: z.coerce.number().positive(),
+  offeredPrice: euros("Offer price"),
   quantity: z.coerce.number().int().positive(),
   message: z.string().optional(),
 });
 
 export const offerRespondSchema = z.object({
   action: z.enum(["ACCEPT", "REJECT", "COUNTER", "WITHDRAW"]),
-  counterPrice: z.coerce.number().positive().optional(),
+  counterPrice: euros("Counter price").optional(),
   counterQuantity: z.coerce.number().int().positive().optional(),
   counterMessage: z.string().optional(),
 });
@@ -59,8 +90,8 @@ export const savedSearchSchema = z.object({
   keyword: z.string().optional(),
   category: z.string().optional(),
   location: z.string().optional(),
-  minPrice: z.coerce.number().optional(),
-  maxPrice: z.coerce.number().optional(),
+  minPrice: euros("Min price").optional(),
+  maxPrice: euros("Max price").optional(),
 });
 
 export const reviewSchema = z.object({

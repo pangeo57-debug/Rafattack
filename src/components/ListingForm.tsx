@@ -127,7 +127,7 @@ export default function ListingForm({ listing }: { listing?: Listing }) {
             type="number"
             step="0.01"
             min={0}
-            defaultValue={listing?.originalPrice}
+            defaultValue={listing ? (listing.originalPriceCents / 100).toFixed(2) : undefined}
             required
             className={ui.input}
           />
@@ -139,7 +139,7 @@ export default function ListingForm({ listing }: { listing?: Listing }) {
             type="number"
             step="0.01"
             min={0}
-            defaultValue={listing?.askingPrice}
+            defaultValue={listing ? (listing.askingPriceCents / 100).toFixed(2) : undefined}
             required
             className={ui.input}
           />

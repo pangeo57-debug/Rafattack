@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, formatMoney, formatDate, formatDateTime } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
+import { ui, formatDate, formatDateTime } from "@/lib/ui";
 import DisputeResolutionActions from "@/components/DisputeResolutionActions";
 
 export default async function AdminDisputesPage() {
@@ -27,7 +28,7 @@ export default async function AdminDisputesPage() {
             </div>
             <p className="mt-1 text-sm text-zinc-500">
               Seller: {t.sellerBusiness.name} &middot; Buyer: {t.buyerBusiness.name} &middot;{" "}
-              {formatMoney(t.amount)}
+              {formatCents(t.amountCents)}
             </p>
             {t.disputeReason && (
               <p className="mt-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

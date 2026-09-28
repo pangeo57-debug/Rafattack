@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, formatMoney } from "@/lib/ui";
+import { formatCents } from "@/lib/money";
+import { ui } from "@/lib/ui";
 
 export default async function AdminOverviewPage() {
   await requireAdmin();
@@ -29,7 +30,7 @@ export default async function AdminOverviewPage() {
     prisma.transaction.count(),
     prisma.transaction.aggregate({
       where: { orderStatus: "COMPLETED" },
-      _sum: { amount: true, commissionAmount: true },
+      _sum: { amountCents: true, commissionCents: true },
     }),
     prisma.transaction.count({ where: { orderStatus: "DISPUTED" } }),
   ]);
@@ -58,13 +59,13 @@ export default async function AdminOverviewPage() {
         />
         <Stat
           label="Gross merchandise value"
-          value={formatMoney(completedAgg._sum.amount ?? 0)}
+          value={formatCents(completedAgg._sum.amountCents ?? 0)}
           icon={TrendingUp}
           tint="bg-emerald-50 text-emerald-600"
         />
         <Stat
           label="Commission revenue"
-          value={formatMoney(completedAgg._sum.commissionAmount ?? 0)}
+          value={formatCents(completedAgg._sum.commissionCents ?? 0)}
           icon={Wallet}
           tint="bg-emerald-50 text-emerald-600"
         />

@@ -55,7 +55,7 @@ export async function PATCH(
         const transaction = await acceptOfferAndCreateTransaction(
           offer,
           offer.listing,
-          offer.offeredPrice,
+          offer.offeredPriceCents,
           offer.quantity,
           { by: { actor: "SELLER", userId: session.user.id }, reason: "Seller accepted the buyer's offer" }
         );
@@ -84,7 +84,7 @@ export async function PATCH(
       }
       const updated = await prisma.offer.update({
         where: { id },
-        data: { status: "COUNTERED", counterPrice, counterQuantity, counterMessage },
+        data: { status: "COUNTERED", counterPriceCents: counterPrice, counterQuantity, counterMessage },
       });
       await notify(
         offer.buyerBusinessId,
@@ -106,7 +106,7 @@ export async function PATCH(
         const transaction = await acceptOfferAndCreateTransaction(
           offer,
           offer.listing,
-          offer.counterPrice!,
+          offer.counterPriceCents!,
           offer.counterQuantity!,
           { by: { actor: "BUYER", userId: session.user.id }, reason: "Buyer accepted the seller's counter-offer" }
         );

@@ -5,7 +5,7 @@
 // charge protection relies on).
 
 type Opts = { idempotencyKey?: string } | undefined;
-type Session = { id: string; url: string; status: "open" | "complete" | "expired"; payment_intent: string; metadata: Record<string, string> };
+type Session = { id: string; url: string; status: "open" | "complete" | "expired"; payment_intent: string; metadata: Record<string, string>; amount_total?: number };
 
 let counter = 0;
 const byKey = new Map<string, unknown>();
@@ -56,7 +56,10 @@ export function completeSession(id: string) {
 export const fakeStripe = {
   checkout: {
     sessions: {
-      create: async (params: { metadata?: Record<string, string> }, opts?: Opts) =>
+      create: async (
+        params: { metadata?: Record<string, string>; line_items?: { price_data: { unit_amount: number }; quantity: number }[] },
+        opts?: Opts
+      ) =>
         idempotent(opts, () => {
           counter++;
           const s: Session = {
@@ -65,6 +68,8 @@ export const fakeStripe = {
             status: "open",
             payment_intent: `pi_test_${counter}`,
             metadata: params.metadata ?? {},
+            // What Stripe would charge: sum of unit_amount x quantity, integers only.
+            amount_total: (params.line_items ?? []).reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0),
           };
           sessions.set(s.id, s);
           calls.sessionsCreated.push(s);

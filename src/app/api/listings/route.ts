@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { cleanImages, ImageRejected } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
+import { parseEuroToCents } from "@/lib/money";
 import { listingSchema } from "@/lib/validators";
 import { notifyMatchingSavedSearches } from "@/lib/notify";
 import { isBusinessSuspended } from "@/lib/session";
@@ -36,8 +37,11 @@ export async function GET(req: NextRequest) {
       },
     ];
   }
-  if (minPrice) where.askingPrice = { ...(where.askingPrice as object), gte: Number(minPrice) };
-  if (maxPrice) where.askingPrice = { ...(where.askingPrice as object), lte: Number(maxPrice) };
+  // Filters are typed in euros; a value that isn't a price is ignored, not an error page.
+  const minCents = minPrice ? parseEuroToCents(minPrice) : null;
+  const maxCents = maxPrice ? parseEuroToCents(maxPrice) : null;
+  if (minCents !== null) where.askingPriceCents = { ...(where.askingPriceCents as object), gte: minCents };
+  if (maxCents !== null) where.askingPriceCents = { ...(where.askingPriceCents as object), lte: maxCents };
   if (minQty) where.quantityAvailable = { gte: Number(minQty) };
   if (businessType) where.sellerBusiness = { type: businessType as never };
 
@@ -86,8 +90,8 @@ export async function POST(req: NextRequest) {
       quantityAvailable: data.quantityAvailable,
       unit: data.unit,
       condition: data.condition,
-      originalPrice: data.originalPrice,
-      askingPrice: data.askingPrice,
+      originalPriceCents: data.originalPriceCents,
+      askingPriceCents: data.askingPriceCents,
       minOrderQty: data.minOrderQty,
       fulfillment: data.fulfillment,
       locationCity: data.locationCity,

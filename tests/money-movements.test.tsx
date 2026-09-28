@@ -24,12 +24,12 @@ async function order(state: Record<string, unknown>) {
   const buyer = await makeBusiness();
   const listing = await makeListing(seller.business.id);
   const offer = await prisma.offer.create({
-    data: { listingId: listing.id, buyerBusinessId: buyer.business.id, offeredPrice: 18, quantity: 10, status: "ACCEPTED" },
+    data: { listingId: listing.id, buyerBusinessId: buyer.business.id, offeredPriceCents: 1800, quantity: 10, status: "ACCEPTED" },
   });
   const tx = await prisma.transaction.create({
     data: {
       offerId: offer.id, listingId: listing.id, sellerBusinessId: seller.business.id, buyerBusinessId: buyer.business.id,
-      quantity: 10, unitPrice: 18, amount: 180, commissionRate: 8, commissionAmount: 14.4, sellerPayoutAmount: 165.6,
+      quantity: 10, unitPriceCents: 1800, amountCents: 18000, commissionBps: 800, commissionCents: 1440, sellerPayoutCents: 16560,
       paymentStatus: "AUTHORIZED", escrowStatus: "HOLDING", paidAt: new Date(), stripePaymentIntentId: "pi_paid",
       ...state,
     },

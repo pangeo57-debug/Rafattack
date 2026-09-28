@@ -66,7 +66,7 @@ export async function POST(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const amountCents = Math.round(transaction.amount * 100);
+  const amountCents = transaction.amountCents; // computed once, by computeAmounts(), when the order was made
 
   // Payment is collected into the platform's own Stripe balance (not a Connect
   // destination charge) so that every payment method — card/Apple Pay/Google

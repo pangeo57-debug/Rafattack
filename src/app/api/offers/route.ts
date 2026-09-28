@@ -66,13 +66,13 @@ export async function POST(req: NextRequest) {
 
   // "Buy now" is an instant sale with no seller in the loop, so it must be at
   // the seller's own asking price — never a price sent by the browser.
-  const price = buyNow ? listing.askingPrice : data.offeredPrice;
+  const price = buyNow ? listing.askingPriceCents : data.offeredPrice; // cents
 
   const offer = await prisma.offer.create({
     data: {
       listingId: data.listingId,
       buyerBusinessId: session.user.businessId,
-      offeredPrice: price,
+      offeredPriceCents: price,
       quantity: data.quantity,
       message: data.message,
       status: "PENDING",

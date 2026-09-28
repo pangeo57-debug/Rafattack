@@ -17,14 +17,14 @@ import type { Tx } from "@/lib/order-status";
 
 const MAX_ATTEMPTS = 8;
 
-export async function queuePayout(tx: Tx, t: { id: string; sellerPayoutAmount: number }, destination: string, key: string) {
+export async function queuePayout(tx: Tx, t: { id: string; sellerPayoutCents: number }, destination: string, key: string) {
   return tx.moneyMovement.upsert({
     where: { idempotencyKey: key },
     update: {},
     create: {
       transactionId: t.id,
       kind: "SELLER_PAYOUT",
-      amountCents: Math.round(t.sellerPayoutAmount * 100),
+      amountCents: t.sellerPayoutCents,
       destination,
       idempotencyKey: key,
     },

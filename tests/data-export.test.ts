@@ -10,12 +10,12 @@ async function scene() {
   const myListing = await makeListing(me.business.id, { title: "My pallets of socks" });
   const theirListing = await makeListing(other.business.id, { title: "Their private stock" });
   const offer = await prisma.offer.create({
-    data: { listingId: theirListing.id, buyerBusinessId: me.business.id, offeredPrice: 10, quantity: 5, message: "my offer note", status: "ACCEPTED" },
+    data: { listingId: theirListing.id, buyerBusinessId: me.business.id, offeredPriceCents: 1000, quantity: 5, message: "my offer note", status: "ACCEPTED" },
   });
   const tx = await prisma.transaction.create({
     data: {
       offerId: offer.id, listingId: theirListing.id, sellerBusinessId: other.business.id, buyerBusinessId: me.business.id,
-      quantity: 5, unitPrice: 10, amount: 50, commissionRate: 8, commissionAmount: 4, sellerPayoutAmount: 46, orderStatus: "COMPLETED",
+      quantity: 5, unitPriceCents: 1000, amountCents: 5000, commissionBps: 800, commissionCents: 400, sellerPayoutCents: 4600, orderStatus: "COMPLETED",
     },
   });
   await prisma.review.create({ data: { transactionId: tx.id, reviewerBusinessId: me.business.id, revieweeBusinessId: other.business.id, rating: 5, comment: "great seller" } });

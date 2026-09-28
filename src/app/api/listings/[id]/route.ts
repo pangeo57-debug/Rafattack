@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { cleanImages, ImageRejected } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
-import { listingSchema } from "@/lib/validators";
+import { listingUpdateSchema } from "@/lib/validators";
 import { isBusinessSuspended } from "@/lib/session";
 import { findOwnListing, notFoundResponse } from "@/lib/access";
 
@@ -59,7 +59,7 @@ export async function PATCH(
     return NextResponse.json(updated);
   }
 
-  const parsed = listingSchema.partial().safeParse(json);
+  const parsed = listingUpdateSchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }

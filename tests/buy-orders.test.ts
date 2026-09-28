@@ -103,7 +103,7 @@ describe("selling to a buy request", () => {
   async function scene(listingOverrides: Record<string, unknown> = {}, bidOverrides: Record<string, unknown> = {}) {
     const seller = await makeBusiness();
     const buyer = await makeBusiness();
-    const listing = await makeListing(seller.business.id, { quantityAvailable: 300, askingPrice: 9, locationCountry: "Greece", ...listingOverrides });
+    const listing = await makeListing(seller.business.id, { quantityAvailable: 300, askingPriceCents: 900, locationCountry: "Greece", ...listingOverrides });
     const b = await bid(buyer, bidOverrides);
     return { seller, buyer, listing, b };
   }
@@ -116,7 +116,7 @@ describe("selling to a buy request", () => {
 
     expect(res.status).toBe(201);
     const t = res.json.transaction as Record<string, unknown>;
-    expect(t).toMatchObject({ buyerBusinessId: buyer.business.id, sellerBusinessId: seller.business.id, quantity: 300, unitPrice: 3.8, amount: 1140, orderStatus: "AWAITING_PAYMENT" });
+    expect(t).toMatchObject({ buyerBusinessId: buyer.business.id, sellerBusinessId: seller.business.id, quantity: 300, unitPriceCents: 380, amountCents: 114000, orderStatus: "AWAITING_PAYMENT" });
     expect((await prisma.listing.findUniqueOrThrow({ where: { id: listing.id } })).quantityAvailable).toBe(0);
     expect((await prisma.buyOrder.findUniqueOrThrow({ where: { id: b.id } })).remainingQty).toBe(200);
     const offer = await prisma.offer.findUniqueOrThrow({ where: { id: t.offerId as string } });
@@ -128,7 +128,7 @@ describe("selling to a buy request", () => {
     const { seller, listing, b } = await scene();
     actAs(seller);
     const res = await sell(b.id, listing.id, { price: 0.01, offeredPrice: 99, unitPrice: 99, maxUnitPriceCents: 1 });
-    expect((res.json.transaction as { unitPrice: number }).unitPrice).toBe(3.8);
+    expect((res.json.transaction as { unitPriceCents: number }).unitPriceCents).toBe(380);
   });
 
   it("the request is marked filled once what's left is below the buyer's smallest lot", async () => {

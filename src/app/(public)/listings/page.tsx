@@ -1,5 +1,6 @@
 import { Search as SearchIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { parseEuroToCents } from "@/lib/money";
 import { ui } from "@/lib/ui";
 import { LISTING_CATEGORIES, BUSINESS_TYPES } from "@/lib/constants";
 import ListingCard from "@/components/ListingCard";
@@ -40,8 +41,11 @@ export default async function BrowseListingsPage({
       },
     ];
   }
-  if (sp.minPrice) where.askingPrice = { ...(where.askingPrice as object), gte: Number(sp.minPrice) };
-  if (sp.maxPrice) where.askingPrice = { ...(where.askingPrice as object), lte: Number(sp.maxPrice) };
+  // Price filters are typed in euros; something that isn't a price is ignored.
+  const minCents = sp.minPrice ? parseEuroToCents(sp.minPrice) : null;
+  const maxCents = sp.maxPrice ? parseEuroToCents(sp.maxPrice) : null;
+  if (minCents !== null) where.askingPriceCents = { ...(where.askingPriceCents as object), gte: minCents };
+  if (maxCents !== null) where.askingPriceCents = { ...(where.askingPriceCents as object), lte: maxCents };
   if (sp.minQty) where.quantityAvailable = { gte: Number(sp.minQty) };
   if (sp.businessType) where.sellerBusiness = { type: sp.businessType as never };
 
@@ -119,8 +123,8 @@ export default async function BrowseListingsPage({
               id: l.id,
               title: l.title,
               category: l.category,
-              askingPrice: l.askingPrice,
-              originalPrice: l.originalPrice,
+              askingPriceCents: l.askingPriceCents,
+              originalPriceCents: l.originalPriceCents,
               unit: l.unit,
               locationCity: l.locationCity,
               locationCountry: l.locationCountry,

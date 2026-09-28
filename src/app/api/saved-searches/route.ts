@@ -13,7 +13,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
   const savedSearch = await prisma.savedSearch.create({
-    data: { businessId: session.user.businessId, ...parsed.data },
+    data: {
+      businessId: session.user.businessId,
+      keyword: parsed.data.keyword,
+      category: parsed.data.category,
+      location: parsed.data.location,
+      minPriceCents: parsed.data.minPrice, // already cents (validators.euros)
+      maxPriceCents: parsed.data.maxPrice,
+    },
   });
   return NextResponse.json(savedSearch, { status: 201 });
 }

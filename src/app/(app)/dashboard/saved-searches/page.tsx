@@ -1,5 +1,6 @@
 import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { formatCents } from "@/lib/money";
 import { ui } from "@/lib/ui";
 import SavedSearchForm from "@/components/SavedSearchForm";
 import DeleteSavedSearchButton from "@/components/DeleteSavedSearchButton";
@@ -27,7 +28,7 @@ export default async function SavedSearchesPage() {
         {searches.map((s) => (
           <div key={s.id} className={`${ui.card} flex items-center justify-between p-4`}>
             <p className="text-sm text-zinc-700">
-              {[s.keyword, s.category, s.location, s.minPrice ? `min €${s.minPrice}` : null, s.maxPrice ? `max €${s.maxPrice}` : null]
+              {[s.keyword, s.category, s.location, s.minPriceCents != null ? `min ${formatCents(s.minPriceCents)}` : null, s.maxPriceCents != null ? `max ${formatCents(s.maxPriceCents)}` : null]
                 .filter(Boolean)
                 .join(" · ") || "Any listing"}
             </p>
