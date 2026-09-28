@@ -292,6 +292,10 @@ model Transaction {
   stripeCheckoutSessionId String?
   stripePaymentIntentId   String?
 
+  // Filled in by the seller on "Mark as shipped": proof of dispatch.
+  carrier        String?
+  trackingNumber String?
+
   disputeStatus DisputeStatus @default(NONE)
   disputeReason String?
   disputeNote   String?
@@ -302,7 +306,8 @@ model Transaction {
   completedAt DateTime?
   cancelledAt DateTime?
 
-  reviews Review[]
+  reviews  Review[]
+  messages OrderMessage[]
 
   @@index([orderStatus])
   @@index([sellerBusinessId])
@@ -473,4 +478,17 @@ model BuyOrder {
 
   @@index([status, category])
   @@index([buyerBusinessId])
+}
+
+// Messages between buyer and seller of one order. Append-only: they are the
+// record if the order is disputed, so nobody can edit or delete them.
+model OrderMessage {
+  id               String      @id @default(cuid())
+  transactionId    String
+  transaction      Transaction @relation(fields: [transactionId], references: [id])
+  senderBusinessId String
+  body             String
+  createdAt        DateTime    @default(now())
+
+  @@index([transactionId, createdAt])
 }

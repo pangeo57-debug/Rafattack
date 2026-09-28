@@ -20,6 +20,9 @@ export default function OrderActions({
   const [error, setError] = useState<string | null>(null);
   const [disputing, setDisputing] = useState(false);
   const [reason, setReason] = useState("");
+  const [shipping, setShipping] = useState(false);
+  const [carrier, setCarrier] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
 
   async function act(action: string, extra?: Record<string, unknown>) {
     setLoading(action);
@@ -53,9 +56,48 @@ export default function OrderActions({
     const canPickup = fulfillment !== "SHIPPING";
     if (canShip) {
       actions.push(
-        <button key="ship" disabled={loading !== null} onClick={() => act("SHIP")} className={ui.btnPrimary}>
-          Mark as shipped
-        </button>
+        shipping ? (
+          <form
+            key="ship"
+            className="flex w-full flex-wrap items-end gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              act("SHIP", { carrier, trackingNumber });
+            }}
+          >
+            <label className="block text-xs text-zinc-500">
+              Carrier
+              <input
+                list="carriers"
+                required
+                minLength={2}
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+                placeholder="ACS, ELTA Courier, own delivery…"
+                className={ui.input}
+              />
+              <datalist id="carriers">
+                {["ACS", "ELTA Courier", "Speedex", "Geniki Taxydromiki", "DHL", "Box Now", "Own delivery"].map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </label>
+            <label className="block text-xs text-zinc-500">
+              Tracking number (if any)
+              <input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className={ui.input} />
+            </label>
+            <button type="submit" disabled={loading !== null} className={ui.btnPrimary}>
+              {loading === "SHIP" ? "Saving..." : "Confirm shipment"}
+            </button>
+            <button type="button" onClick={() => setShipping(false)} className={ui.btnSecondary}>
+              Back
+            </button>
+          </form>
+        ) : (
+          <button key="ship" disabled={loading !== null} onClick={() => setShipping(true)} className={ui.btnPrimary}>
+            Mark as shipped
+          </button>
+        )
       );
     }
     if (canPickup) {

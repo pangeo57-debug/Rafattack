@@ -10,6 +10,8 @@ import { cancelUnpaidOrder, completeOrder } from "@/lib/order-actions";
 const bodySchema = z.object({
   action: z.enum(["CANCEL", "SHIP", "MARK_PICKED_UP", "COMPLETE", "DISPUTE"]),
   reason: z.string().optional(),
+  carrier: z.string().trim().max(60).optional(),
+  trackingNumber: z.string().trim().max(80).optional(),
 });
 
 export async function PATCH(
@@ -31,7 +33,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
-  const { action, reason } = parsed.data;
+  const { action, reason, carrier, trackingNumber } = parsed.data;
 
   if (action === "CANCEL") {
     const cancelled = await cancelUnpaidOrder(id, isBuyer ? "BUYER" : "SELLER");
@@ -51,6 +53,11 @@ export async function PATCH(
 
   if (action === "SHIP" || action === "MARK_PICKED_UP") {
     if (!isSeller) return NextResponse.json({ error: "Only the seller can update fulfillment." }, { status: 403 });
+    // Shipping needs proof of dispatch: who carries it (and the tracking
+    // number if there is one). It is what settles "it never arrived".
+    if (action === "SHIP" && (!carrier || carrier.length < 2)) {
+      return NextResponse.json({ error: "Enter the carrier (e.g. ACS, ELTA Courier, own delivery)." }, { status: 400 });
+    }
     // Conditional update, not read-then-write: the ship deadline timer may
     // refund this order at the same moment.
     const shipped = await prisma.transaction.updateMany({
@@ -58,6 +65,7 @@ export async function PATCH(
       data: {
         orderStatus: action === "SHIP" ? "SHIPPED" : "PICKED_UP",
         shippedAt: new Date(),
+        ...(action === "SHIP" ? { carrier, trackingNumber: trackingNumber || null } : {}),
       },
     });
     if (shipped.count === 0) {
@@ -68,7 +76,9 @@ export async function PATCH(
       transaction.buyerBusinessId,
       "ORDER_STATUS_CHANGED",
       action === "SHIP" ? "Order shipped" : "Order ready for pickup",
-      `Your order for "${transaction.listing.title}" is on its way. Confirm receipt once you have it.`,
+      action === "SHIP"
+        ? `Your order for "${transaction.listing.title}" was shipped with ${carrier}${trackingNumber ? ` (tracking ${trackingNumber})` : ""}. Confirm receipt once you have it.`
+        : `Your order for "${transaction.listing.title}" is on its way. Confirm receipt once you have it.`,
       `/dashboard/orders/${id}`
     );
     return NextResponse.json(updated);

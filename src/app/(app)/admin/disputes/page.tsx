@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ui, formatMoney, formatDate } from "@/lib/ui";
+import { ui, formatMoney, formatDate, formatDateTime } from "@/lib/ui";
 import DisputeResolutionActions from "@/components/DisputeResolutionActions";
 
 export default async function AdminDisputesPage() {
   await requireAdmin();
   const disputes = await prisma.transaction.findMany({
     where: { orderStatus: "DISPUTED" },
-    include: { listing: true, sellerBusiness: true, buyerBusiness: true },
+    include: { listing: true, sellerBusiness: true, buyerBusiness: true, messages: { orderBy: { createdAt: "asc" } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -34,6 +34,21 @@ export default async function AdminDisputesPage() {
                 {t.disputeReason}
               </p>
             )}
+            <p className="mt-2 text-sm text-zinc-500">
+              Shipment: {t.carrier ? `${t.carrier}${t.trackingNumber ? ` · tracking ${t.trackingNumber}` : " · no tracking"}` : "not shipped / pickup"}
+            </p>
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer text-zinc-700">Messages ({t.messages.length})</summary>
+              <ul className="mt-2 space-y-1">
+                {t.messages.map((m) => (
+                  <li key={m.id} className="rounded-md bg-zinc-50 px-3 py-2">
+                    <span className="font-medium">{m.senderBusinessId === t.sellerBusinessId ? "Seller" : "Buyer"}</span>{" "}
+                    <span className="text-xs text-zinc-400">{formatDateTime(m.createdAt)}</span>
+                    <p className="whitespace-pre-wrap text-zinc-700">{m.body}</p>
+                  </li>
+                ))}
+              </ul>
+            </details>
             <DisputeResolutionActions transactionId={t.id} />
           </div>
         ))}

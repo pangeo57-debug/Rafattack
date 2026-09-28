@@ -12,6 +12,7 @@ import PayButton from "@/components/PayButton";
 import OrderActions from "@/components/OrderActions";
 import OrderStepper from "@/components/OrderStepper";
 import ReviewForm from "@/components/ReviewForm";
+import OrderMessageForm from "@/components/OrderMessageForm";
 
 export default async function OrderDetailPage({
   params,
@@ -32,6 +33,7 @@ export default async function OrderDetailPage({
       sellerBusiness: true,
       buyerBusiness: true,
       reviews: true,
+      messages: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -190,6 +192,38 @@ export default async function OrderDetailPage({
           <ReviewForm transactionId={transaction.id} revieweeName={otherParty.name} />
         </div>
       )}
+
+      {transaction.carrier && (
+        <div className={`${ui.card} mt-4 p-4 text-sm`} data-testid="shipment">
+          <p className="font-medium text-zinc-900">Shipment</p>
+          <p className="mt-1 text-zinc-700">
+            {transaction.carrier}
+            {transaction.trackingNumber ? ` · tracking ${transaction.trackingNumber}` : " · no tracking number given"}
+          </p>
+        </div>
+      )}
+
+      <div id="messages" className={`${ui.card} mt-6 p-4`}>
+        <h2 className="text-sm font-medium text-zinc-900">Messages with the {isSeller ? "buyer" : "seller"}</h2>
+        {transaction.messages.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">No messages yet.</p>
+        ) : (
+          <ul className="mt-3 space-y-2" data-testid="messages">
+            {transaction.messages.map((m) => {
+              const mine = m.senderBusinessId === business.id;
+              return (
+                <li key={m.id} className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${mine ? "ml-auto bg-brand/10 text-zinc-900" : "bg-zinc-100 text-zinc-800"}`}>
+                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    {mine ? "You" : isSeller ? "Buyer" : "Seller"} · {formatDateTime(m.createdAt)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <OrderMessageForm transactionId={transaction.id} otherParty={isSeller ? "buyer" : "seller"} />
+      </div>
 
       {timeline.length > 0 && (
         <div className="mt-6">
