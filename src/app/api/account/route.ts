@@ -66,6 +66,8 @@ export async function DELETE() {
         contactPhone: null,
         address: null,
         taxId: `deleted-${businessId}`,
+        verificationDocuments: "[]",
+        verificationNote: null,
         verificationStatus: "SUSPENDED",
         stripeAccountId: null,
         stripeOnboarded: false,

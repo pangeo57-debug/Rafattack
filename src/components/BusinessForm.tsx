@@ -10,7 +10,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 export default function BusinessForm({ business }: { business: Business }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<null | "ok" | "reverify">(null);
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState<string[]>(
     JSON.parse(business.verificationDocuments || "[]")
@@ -19,7 +19,7 @@ export default function BusinessForm({ business }: { business: Business }) {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setSaved(false);
+    setSaved(null);
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const body = { ...Object.fromEntries(form.entries()), verificationDocuments: documents };
@@ -34,15 +34,22 @@ export default function BusinessForm({ business }: { business: Business }) {
       setError(json.error ?? "Could not save changes.");
       return;
     }
-    setSaved(true);
+    const json = await res.json();
+    setSaved(json.reverificationRequired ? "reverify" : "ok");
     router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {saved && (
+      {saved === "ok" && (
         <div className="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Saved.</div>
+      )}
+      {saved === "reverify" && (
+        <div className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800" role="status">
+          Saved. Because you changed your business name or tax ID, your business must be verified again: upload your
+          registration document below. Until then your profile shows as unverified.
+        </div>
       )}
       <div>
         <label className={ui.label}>Business name</label>

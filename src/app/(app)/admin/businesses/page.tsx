@@ -43,7 +43,11 @@ export default async function AdminBusinessesPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-2 text-xs text-amber-600">No verification documents uploaded yet.</p>
+                  <p className="mt-2 text-xs text-amber-600">
+                    {b.verificationStatus === "PENDING"
+                      ? "No verification documents uploaded yet."
+                      : "Documents deleted after the verification decision."}
+                  </p>
                 )}
               </div>
               <BusinessVerificationActions businessId={b.id} />

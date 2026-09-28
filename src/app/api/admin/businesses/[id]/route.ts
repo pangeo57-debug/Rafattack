@@ -26,7 +26,13 @@ export async function PATCH(
 
   const business = await prisma.business.update({
     where: { id },
-    data: { verificationStatus, verificationNote },
+    data: {
+      verificationStatus,
+      verificationNote,
+      // ID documents are kept only until a decision is made (data
+      // minimisation). If the business needs a new check, it uploads again.
+      ...(verificationStatus !== "PENDING" ? { verificationDocuments: "[]" } : {}),
+    },
   });
 
   if (verificationStatus === "SUSPENDED") {

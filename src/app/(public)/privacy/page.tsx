@@ -50,6 +50,9 @@ export default function PrivacyPolicyPage() {
           of your business registration certificate or the account
           owner&apos;s ID. These are used only to verify your business, are
           visible only to our admin team, and are never shown to other users.
+          We delete them as soon as we have decided on your verification, and
+          when you delete your account. Changing your business name or tax ID
+          after verification means we need to verify you again.
         </li>
         <li>
           <strong>Listing reports:</strong> if you report a listing, your name,
@@ -134,8 +137,12 @@ export default function PrivacyPolicyPage() {
       <p className="mt-2">
         Depending on where you are located (including under the EU/UK GDPR),
         you may have the right to access, correct, export, or delete your
-        personal data, and to object to or restrict certain processing. To
-        exercise these rights, contact us at{" "}
+        personal data, and to object to or restrict certain processing. You
+        can download a copy of your data yourself from{" "}
+        <Link href="/dashboard/account" className="text-brand hover:underline">
+          Dashboard → Account → Download my data
+        </Link>
+        . For anything else, contact us at{" "}
         <a href="mailto:[SUPPORT_EMAIL]" className="text-brand hover:underline">
           [SUPPORT_EMAIL]
         </a>
