@@ -63,6 +63,10 @@ export default function TermsPage() {
         Service.
       </p>
 
+      <p className="mt-2">
+        A <strong>buy request</strong> is a standing, binding offer to buy: you set the category, accepted conditions, maximum price per unit, quantity and region. When a seller sells to it, an order is created at your price and you must pay within 48 hours. If you cancel that order or don&apos;t pay in time, your request is paused. Only verified businesses can post buy requests.
+      </p>
+
       <h2 className="mt-8 text-lg font-semibold text-zinc-900">5. Payments, escrow &amp; commission</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>Payments are processed by Stripe. By using paid features you also agree to Stripe&apos;s terms and, if you receive payouts, the Stripe Connected Account Agreement.</li>

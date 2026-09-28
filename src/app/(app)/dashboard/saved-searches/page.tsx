@@ -27,7 +27,7 @@ export default async function SavedSearchesPage() {
         {searches.map((s) => (
           <div key={s.id} className={`${ui.card} flex items-center justify-between p-4`}>
             <p className="text-sm text-zinc-700">
-              {[s.keyword, s.category, s.location, s.minPrice ? `min $${s.minPrice}` : null, s.maxPrice ? `max $${s.maxPrice}` : null]
+              {[s.keyword, s.category, s.location, s.minPrice ? `min €${s.minPrice}` : null, s.maxPrice ? `max €${s.maxPrice}` : null]
                 .filter(Boolean)
                 .join(" · ") || "Any listing"}
             </p>

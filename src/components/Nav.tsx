@@ -27,6 +27,9 @@ export default async function Nav() {
             <Link href="/listings" className="transition-colors hover:text-zinc-900">
               Browse
             </Link>
+            <Link href="/wanted" className="transition-colors hover:text-zinc-900">
+              Wanted
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

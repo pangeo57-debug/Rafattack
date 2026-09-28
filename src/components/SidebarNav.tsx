@@ -23,6 +23,8 @@ import {
   X,
   Plus,
   Flag,
+  Megaphone,
+  Target,
 } from "lucide-react";
 import SignOutButton from "@/components/SignOutButton";
 import { badgeColor } from "@/lib/ui";
@@ -37,8 +39,10 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/listings", label: "Browse", icon: Search },
+  { href: "/wanted", label: "Wanted", icon: Target },
   { href: "/dashboard/listings", label: "My Listings", icon: Package },
   { href: "/dashboard/offers", label: "Offers", icon: Handshake },
+  { href: "/dashboard/bids", label: "Buy Requests", icon: Megaphone },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
   { href: "/dashboard/saved-searches", label: "Saved Searches", icon: Bookmark },
 ];

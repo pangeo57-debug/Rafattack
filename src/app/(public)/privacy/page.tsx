@@ -99,7 +99,10 @@ export default function PrivacyPolicyPage() {
           <strong>Other businesses on the marketplace</strong> — your
           business name, type, location, active listings, and reviews are
           visible to other users, since this is how the marketplace works.
-          Your login email and tax/VAT ID are never shown publicly.
+          Your login email and tax/VAT ID are never shown publicly. Buy
+          requests are shown to other users without your business name: only
+          that a verified buyer is waiting, with your city and rating. Your
+          name is shown to a seller once they sell to your request.
         </li>
         <li>
           <strong>The seller of an order you paid for</strong> — your business

@@ -10,6 +10,9 @@ import OfferBox from "@/components/OfferBox";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import ReportListing from "@/components/ReportListing";
 import { statementOfReasons } from "@/lib/moderation";
+import { matchingBuyOrders } from "@/lib/buy-orders";
+import { formatCents } from "@/lib/money";
+import SellToBuyer from "@/components/SellToBuyer";
 
 export async function generateMetadata({
   params,
@@ -61,6 +64,16 @@ export default async function ListingDetailPage({
   const photos: string[] = JSON.parse(listing.photos || "[]");
   const condition = LISTING_CONDITIONS.find((c) => c.value === listing.condition)?.label;
   const fulfillment = FULFILLMENT_TYPES.find((f) => f.value === listing.fulfillment)?.label;
+
+  // The seller sees who is already waiting to buy this, best price first.
+  // Buyers are shown as "verified buyer" with city and rating, not by name:
+  // the name is revealed on the order once a sale is made.
+  const waiting = isOwner ? await matchingBuyOrders(listing) : [];
+  const buyerIds = [...new Set(waiting.map((w) => w.bid.buyerBusinessId))];
+  const [buyerInfo, buyerRatings] = await Promise.all([
+    prisma.business.findMany({ where: { id: { in: buyerIds } }, select: { id: true, city: true, country: true } }),
+    prisma.review.groupBy({ by: ["revieweeBusinessId"], where: { revieweeBusinessId: { in: buyerIds } }, _avg: { rating: true }, _count: true }),
+  ]);
 
   const reviewAgg = await prisma.review.aggregate({
     where: { revieweeBusinessId: listing.sellerBusinessId },
@@ -204,6 +217,48 @@ export default async function ListingDetailPage({
               />
             )}
           </div>
+
+          {isOwner && listing.status === "ACTIVE" && (
+            <div className={`${ui.card} mt-6 p-4`} data-testid="buyers-waiting">
+              <p className="font-medium text-zinc-900">
+                {waiting.length > 0
+                  ? `${waiting.length} buyer${waiting.length === 1 ? "" : "s"} waiting for this`
+                  : "No buyers waiting yet"}
+              </p>
+              {waiting.length === 0 ? (
+                <p className="mt-1 text-sm text-zinc-500">
+                  When a verified buyer posts a matching buy request, it appears here and you can sell in one click.{" "}
+                  <Link href="/wanted" className="text-brand hover:underline">See what buyers want</Link>.
+                </p>
+              ) : (
+                <ul className="mt-3 divide-y divide-zinc-100">
+                  {waiting.map(({ bid, qty }) => {
+                    const info = buyerInfo.find((b) => b.id === bid.buyerBusinessId);
+                    const rating = buyerRatings.find((r) => r.revieweeBusinessId === bid.buyerBusinessId);
+                    return (
+                      <li key={bid.id} className="py-3">
+                        <p className="text-sm text-zinc-900">
+                          <span className="font-semibold">{formatCents(bid.maxUnitPriceCents, bid.currency)}</span> / unit · takes up to{" "}
+                          {qty}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          Verified buyer · {info?.city}, {info?.country} ·{" "}
+                          {rating ? `${rating._avg.rating?.toFixed(1)} ★ (${rating._count})` : "no reviews yet"}
+                        </p>
+                        <SellToBuyer
+                          buyOrderId={bid.id}
+                          listingId={listing.id}
+                          unitPriceCents={bid.maxUnitPriceCents}
+                          minQty={Math.max(bid.minLotQty, listing.minOrderQty)}
+                          maxQty={qty}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
 
           {!isOwner && listing.status !== "REMOVED" && (
             <div className="mt-6">

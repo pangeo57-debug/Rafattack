@@ -35,6 +35,7 @@ export function badgeColor(status: string) {
     CANCELLED: "bg-zinc-100 text-zinc-600 ring-zinc-500/20",
     SOLD_OUT: "bg-zinc-100 text-zinc-600 ring-zinc-500/20",
     PAUSED: "bg-amber-50 text-amber-700 ring-amber-600/20",
+    FILLED: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
     REMOVED: "bg-zinc-100 text-zinc-600 ring-zinc-500/20",
     HOLDING: "bg-amber-50 text-amber-700 ring-amber-600/20",
     RELEASED: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
