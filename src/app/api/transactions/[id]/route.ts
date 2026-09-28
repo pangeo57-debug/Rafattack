@@ -33,13 +33,34 @@ export async function PATCH(
   const { action, reason } = parsed.data;
 
   if (action === "CANCEL") {
-    if (transaction.orderStatus !== "AWAITING_PAYMENT") {
+    // Cancel and give the reserved units back in one atomic step, so a
+    // double click can't cancel twice and put the stock back twice.
+    const cancelled = await prisma.$transaction(async (tx) => {
+      const claim = await tx.transaction.updateMany({
+        where: { id, orderStatus: "AWAITING_PAYMENT" },
+        data: { orderStatus: "CANCELLED", cancelledAt: new Date() },
+      });
+      if (claim.count === 0) return false;
+      const listing = await tx.listing.update({
+        where: { id: transaction.listingId },
+        data: { quantityAvailable: { increment: transaction.quantity } },
+      });
+      if (listing.status === "SOLD_OUT" && listing.quantityAvailable > 0) {
+        await tx.listing.update({ where: { id: listing.id }, data: { status: "ACTIVE" } });
+      }
+      return true;
+    });
+    if (!cancelled) {
       return NextResponse.json({ error: "Only unpaid orders can be cancelled." }, { status: 400 });
     }
-    const updated = await prisma.transaction.update({
-      where: { id },
-      data: { orderStatus: "CANCELLED", cancelledAt: new Date() },
-    });
+
+    // Close the Stripe payment page so it can't be paid after cancelling. If a
+    // payment still slips through, the webhook refunds it automatically.
+    if (transaction.stripeCheckoutSessionId) {
+      await requireStripe().checkout.sessions.expire(transaction.stripeCheckoutSessionId).catch(() => {});
+    }
+
+    const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
     return NextResponse.json(updated);
   }
 

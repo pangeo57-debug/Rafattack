@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { POST as startCheckout } from "@/app/api/checkout/[transactionId]/route";
 import { POST as webhook } from "@/app/api/stripe/webhook/route";
-import { calls, completeSession } from "./fake-stripe";
+import { calls } from "./fake-stripe";
 import { makeBusiness, makeListing, actAs, call } from "./helpers";
 
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
@@ -72,10 +72,21 @@ describe("a buyer can never be charged twice for one order", () => {
     expect(notes).toBe(1);
   });
 
+  it("a payment that lands after the buyer cancelled the order is refunded", async () => {
+    const { tx } = await unpaidOrder();
+    await prisma.transaction.update({ where: { id: tx.id }, data: { orderStatus: "CANCELLED" } });
+
+    await sendWebhook("checkout.session.async_payment_succeeded", {
+      id: "cs_late", payment_intent: "pi_late", metadata: { transactionId: tx.id },
+    });
+
+    expect((await prisma.transaction.findUniqueOrThrow({ where: { id: tx.id } })).orderStatus).toBe("CANCELLED");
+    expect(calls.refunds).toEqual([expect.objectContaining({ payment_intent: "pi_late" })]);
+  });
+
   it("rejects webhooks with a bad signature", async () => {
     const res = await call(webhook, { rawBody: "{}", headers: { "stripe-signature": "forged" } });
     expect(res.status).toBe(400);
   });
 });
 
-void completeSession;

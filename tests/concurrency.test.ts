@@ -76,3 +76,28 @@ describe("no double payout", () => {
     expect(calls.transfers[0].amount).toBe(16560);
   });
 });
+
+describe("reserved stock is released", () => {
+  it("cancelling an unpaid order puts the units back on the listing", async () => {
+    const seller = await makeBusiness();
+    const buyer = await makeBusiness();
+    const listing = await makeListing(seller.business.id, { quantityAvailable: 100 });
+
+    actAs(buyer);
+    const bought = await call(createOffer, { body: { listingId: listing.id, offeredPrice: 18, quantity: 100, buyNow: true } });
+    const txId = (bought.json.transaction as { id: string }).id;
+    const soldOut = await prisma.listing.findUniqueOrThrow({ where: { id: listing.id } });
+    expect(soldOut.quantityAvailable).toBe(0);
+    expect(soldOut.status).toBe("SOLD_OUT");
+
+    // Cancel twice at once: stock must come back exactly once.
+    const results = await Promise.all(
+      [1, 2].map(() => call(updateTransaction, { method: "PATCH", params: { id: txId }, body: { action: "CANCEL" } }))
+    );
+    expect(results.map((r) => r.status).sort()).toEqual([200, 400]);
+
+    const after = await prisma.listing.findUniqueOrThrow({ where: { id: listing.id } });
+    expect(after.quantityAvailable).toBe(100);
+    expect(after.status).toBe("ACTIVE");
+  });
+});

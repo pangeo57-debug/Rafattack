@@ -46,6 +46,12 @@ export default function PrivacyPolicyPage() {
           marketplace and calculate commission.
         </li>
         <li>
+          <strong>Verification documents:</strong> if you upload them, a photo
+          of your business registration certificate or the account
+          owner&apos;s ID. These are used only to verify your business, are
+          visible only to our admin team, and are never shown to other users.
+        </li>
+        <li>
           <strong>Account credentials:</strong> your password is stored only
           as a salted hash — we cannot read your plaintext password.
         </li>
@@ -88,8 +94,18 @@ export default function PrivacyPolicyPage() {
           Your login email and tax/VAT ID are never shown publicly.
         </li>
         <li>
-          <strong>Service providers</strong> who host our infrastructure and
-          database, bound by confidentiality obligations.
+          <strong>Resend</strong> — to deliver account emails (email
+          verification and password reset). Receives your email address and
+          the content of those emails.
+        </li>
+        <li>
+          <strong>Netlify</strong> — hosts the website and app; processes
+          requests, including your IP address, to serve them.
+        </li>
+        <li>
+          <strong>Prisma (Prisma Postgres)</strong> — hosts our database, which
+          stores all the account, listing, order and verification data
+          described above.
         </li>
         <li>Authorities, where required by law.</li>
       </ul>
