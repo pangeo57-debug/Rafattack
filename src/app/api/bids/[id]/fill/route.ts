@@ -32,6 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       buyOrderId: id,
       listingId: parsed.data.listingId,
       sellerBusinessId: session.user.businessId,
+      sellerUserId: session.user.id,
       quantity: parsed.data.quantity,
     });
     return NextResponse.json({ transaction }, { status: 201 });

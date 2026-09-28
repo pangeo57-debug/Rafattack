@@ -6,6 +6,7 @@ import { findTransactionAsParty, notFoundResponse } from "@/lib/access";
 import { requireStripe } from "@/lib/stripe";
 import { notify } from "@/lib/notify";
 import { cancelUnpaidOrder, completeOrder } from "@/lib/order-actions";
+import { transitionNow } from "@/lib/order-status";
 
 const bodySchema = z.object({
   action: z.enum(["CANCEL", "SHIP", "MARK_PICKED_UP", "COMPLETE", "DISPUTE"]),
@@ -36,7 +37,7 @@ export async function PATCH(
   const { action, reason, carrier, trackingNumber } = parsed.data;
 
   if (action === "CANCEL") {
-    const cancelled = await cancelUnpaidOrder(id, isBuyer ? "BUYER" : "SELLER");
+    const cancelled = await cancelUnpaidOrder(id, isBuyer ? "BUYER" : "SELLER", session.user.id);
     if (!cancelled) {
       return NextResponse.json({ error: "Only unpaid orders can be cancelled." }, { status: 400 });
     }
@@ -58,17 +59,20 @@ export async function PATCH(
     if (action === "SHIP" && (!carrier || carrier.length < 2)) {
       return NextResponse.json({ error: "Enter the carrier (e.g. ACS, ELTA Courier, own delivery)." }, { status: 400 });
     }
-    // Conditional update, not read-then-write: the ship deadline timer may
+    // Through the state machine (row lock): the ship deadline timer may
     // refund this order at the same moment.
-    const shipped = await prisma.transaction.updateMany({
-      where: { id, orderStatus: "PAID" },
+    const shipped = await transitionNow({
+      id,
+      from: ["PAID"],
+      to: action === "SHIP" ? "SHIPPED" : "PICKED_UP",
+      by: { actor: "SELLER", userId: session.user.id },
+      reason: action === "SHIP" ? `Shipped with ${carrier}${trackingNumber ? `, tracking ${trackingNumber}` : ""}` : "Buyer picked up the goods",
       data: {
-        orderStatus: action === "SHIP" ? "SHIPPED" : "PICKED_UP",
         shippedAt: new Date(),
         ...(action === "SHIP" ? { carrier, trackingNumber: trackingNumber || null } : {}),
       },
     });
-    if (shipped.count === 0) {
+    if (!shipped) {
       return NextResponse.json({ error: "Order must be paid first." }, { status: 400 });
     }
     const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
@@ -90,9 +94,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
     }
 
-    // Atomic claim inside completeOrder(): a double click or retry pays the
+    // Row lock inside completeOrder(): a double click or retry pays the
     // seller exactly once.
-    if (!(await completeOrder(id))) {
+    if (!(await completeOrder(id, { actor: "BUYER", userId: session.user.id }, "Buyer confirmed receipt"))) {
       return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
     }
 
@@ -108,17 +112,17 @@ export async function PATCH(
   }
 
   if (action === "DISPUTE") {
-    // Conditional update: the confirm deadline timer may be releasing the
-    // payout at the same moment, and a dispute must not land after that.
-    const disputed = await prisma.transaction.updateMany({
-      where: { id, orderStatus: { in: ["PAID", "SHIPPED", "PICKED_UP"] } },
-      data: {
-        orderStatus: "DISPUTED",
-        disputeStatus: "OPEN",
-        disputeReason: reason ?? "No reason provided",
-      },
+    // Row lock: the confirm deadline timer may be releasing the payout at
+    // the same moment, and a dispute must not land after that.
+    const disputed = await transitionNow({
+      id,
+      from: ["PAID", "SHIPPED", "PICKED_UP"],
+      to: "DISPUTED",
+      by: { actor: isBuyer ? "BUYER" : "SELLER", userId: session.user.id },
+      reason: reason ?? "No reason provided",
+      data: { disputeStatus: "OPEN", disputeReason: reason ?? "No reason provided" },
     });
-    if (disputed.count === 0) {
+    if (!disputed) {
       return NextResponse.json({ error: "This order can't be disputed right now." }, { status: 400 });
     }
     const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });

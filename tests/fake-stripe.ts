@@ -13,9 +13,16 @@ const byKey = new Map<string, unknown>();
 export const calls = {
   sessionsCreated: [] as Session[],
   sessionsExpired: [] as string[],
-  transfers: [] as { amount: number; destination: string; idempotencyKey?: string }[],
-  refunds: [] as { payment_intent: string; idempotencyKey?: string }[],
+  transfers: [] as { id: string; amount: number; destination: string; transfer_group?: string; metadata?: Record<string, string>; idempotencyKey?: string }[],
+  refunds: [] as { id: string; payment_intent: string; metadata?: Record<string, string>; idempotencyKey?: string }[],
 };
+
+/**
+ * Simulate Stripe trouble. "fail": the call throws and nothing happens.
+ * "lostResponse": Stripe does the work but the reply never reaches us (a
+ * network timeout), so our side sees an error. Each entry is used once.
+ */
+export const outages = { transfers: [] as ("fail" | "lostResponse")[], refunds: [] as ("fail" | "lostResponse")[] };
 const sessions = new Map<string, Session>();
 
 function idempotent<T>(opts: Opts, make: () => T): T {
@@ -33,6 +40,8 @@ export function resetFakeStripe() {
   calls.sessionsExpired.length = 0;
   calls.transfers.length = 0;
   calls.refunds.length = 0;
+  outages.transfers.length = 0;
+  outages.refunds.length = 0;
 }
 
 /** Simulate the buyer finishing payment on Stripe's hosted page (the
@@ -77,19 +86,42 @@ export const fakeStripe = {
     },
   },
   transfers: {
-    create: async (p: { amount: number; destination: string }, opts?: Opts) =>
-      idempotent(opts, () => {
-        calls.transfers.push({ amount: p.amount, destination: p.destination, idempotencyKey: opts?.idempotencyKey });
-        return { id: `tr_test_${++counter}` };
-      }),
+    create: async (
+      p: { amount: number; destination: string; transfer_group?: string; metadata?: Record<string, string> },
+      opts?: Opts
+    ) => {
+      const outage = outages.transfers.shift();
+      if (outage === "fail") throw new Error("Stripe API unavailable (simulated)");
+      const result = idempotent(opts, () => {
+        const t = { id: `tr_test_${++counter}`, amount: p.amount, destination: p.destination, transfer_group: p.transfer_group, metadata: p.metadata, idempotencyKey: opts?.idempotencyKey };
+        calls.transfers.push(t);
+        return { id: t.id };
+      });
+      if (outage === "lostResponse") throw new Error("Request timed out (simulated)");
+      return result;
+    },
+    list: async (q: { transfer_group?: string }) => ({
+      data: calls.transfers.filter((t) => !q.transfer_group || t.transfer_group === q.transfer_group),
+    }),
   },
   refunds: {
-    create: async (p: { payment_intent: string }, opts?: Opts) =>
-      idempotent(opts, () => {
-        calls.refunds.push({ payment_intent: p.payment_intent, idempotencyKey: opts?.idempotencyKey });
-        return { id: `re_test_${++counter}` };
-      }),
+    create: async (p: { payment_intent: string; metadata?: Record<string, string> }, opts?: Opts) => {
+      const outage = outages.refunds.shift();
+      if (outage === "fail") throw new Error("Stripe API unavailable (simulated)");
+      const result = idempotent(opts, () => {
+        const r = { id: `re_test_${++counter}`, payment_intent: p.payment_intent, metadata: p.metadata, idempotencyKey: opts?.idempotencyKey };
+        calls.refunds.push(r);
+        return { id: r.id };
+      });
+      if (outage === "lostResponse") throw new Error("Request timed out (simulated)");
+      return result;
+    },
+    list: async (q: { payment_intent?: string }) => ({
+      data: calls.refunds.filter((r) => !q.payment_intent || r.payment_intent === q.payment_intent),
+    }),
   },
+  /** Stripe forgets idempotency keys after 24 hours; tests can make that happen now. */
+  _forgetIdempotencyKeys: () => byKey.clear(),
   accounts: {
     create: async () => ({ id: `acct_test_${++counter}` }),
     retrieve: async (id: string) => ({ id, details_submitted: true, charges_enabled: true }),

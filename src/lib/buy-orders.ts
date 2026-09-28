@@ -105,7 +105,7 @@ export class FillError extends Error {
  * price. Everything that decides money comes from the database: price from
  * the request, quantity capped by both sides. Returns the new order.
  */
-export async function fillBuyOrder(input: { buyOrderId: string; listingId: string; sellerBusinessId: string; quantity?: number }) {
+export async function fillBuyOrder(input: { buyOrderId: string; listingId: string; sellerBusinessId: string; sellerUserId?: string; quantity?: number }) {
   const listing = await prisma.listing.findUnique({ where: { id: input.listingId }, include: { sellerBusiness: true } });
   const bid = await prisma.buyOrder.findUnique({ where: { id: input.buyOrderId } });
   // Not your listing, or a request that doesn't match it: same answer as
@@ -137,7 +137,11 @@ export async function fillBuyOrder(input: { buyOrderId: string; listingId: strin
     },
   });
   try {
-    return await acceptOfferAndCreateTransaction(offer, listing, unitPrice, qty, { buyOrderId: bid.id });
+    return await acceptOfferAndCreateTransaction(offer, listing, unitPrice, qty, {
+      buyOrderId: bid.id,
+      by: { actor: "SELLER", userId: input.sellerUserId ?? null },
+      reason: "Seller sold to the buyer's standing buy request",
+    });
   } catch (err) {
     if (err instanceof InsufficientStockError || err instanceof BuyOrderUnavailableError) {
       await prisma.offer.update({ where: { id: offer.id }, data: { status: "WITHDRAWN" } });

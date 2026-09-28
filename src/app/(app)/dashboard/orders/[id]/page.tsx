@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { findTransactionAsParty } from "@/lib/access";
 import { buyerBillingForSeller } from "@/lib/invoicing";
 import { deadlineFor } from "@/lib/order-timers";
-import { ui, badgeColor, formatMoney, formatDate, formatDateTime } from "@/lib/ui";
+import { ui, badgeColor, formatMoney, formatDateTime } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import PayButton from "@/components/PayButton";
 import OrderActions from "@/components/OrderActions";
@@ -34,6 +34,7 @@ export default async function OrderDetailPage({
       buyerBusiness: true,
       reviews: true,
       messages: { orderBy: { createdAt: "asc" } },
+      events: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -44,13 +45,7 @@ export default async function OrderDetailPage({
   const deadline = deadlineFor(transaction);
   const deadlineText = deadline && deadlineMessage(deadline.kind, formatDateTime(deadline.at), isSeller);
 
-  const timeline = [
-    { label: "Order created", at: transaction.createdAt },
-    { label: "Paid", at: transaction.paidAt },
-    { label: "Shipped / picked up", at: transaction.shippedAt },
-    { label: "Completed", at: transaction.completedAt },
-    { label: "Cancelled", at: transaction.cancelledAt },
-  ].filter((t) => t.at);
+
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
@@ -225,13 +220,15 @@ export default async function OrderDetailPage({
         <OrderMessageForm transactionId={transaction.id} otherParty={isSeller ? "buyer" : "seller"} />
       </div>
 
-      {timeline.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-sm font-medium text-zinc-900">Timeline</h2>
+      {transaction.events.length > 0 && (
+        <div className="mt-6" data-testid="history">
+          <h2 className="text-sm font-medium text-zinc-900">History</h2>
           <ul className="mt-2 space-y-1 text-sm text-zinc-500">
-            {timeline.map((t) => (
-              <li key={t.label}>
-                {t.label}: {formatDate(t.at as Date)}
+            {transaction.events.map((e) => (
+              <li key={e.id}>
+                <span className="text-zinc-800">{ORDER_STATUS_LABELS[e.toStatus] ?? e.toStatus}</span> ·{" "}
+                {ACTOR_LABELS[e.actor]} · {formatDateTime(e.createdAt)}
+                {e.reason && <span className="block text-xs text-zinc-400">{e.reason}</span>}
               </li>
             ))}
           </ul>
@@ -257,3 +254,11 @@ function deadlineMessage(kind: "PAY" | "SHIP" | "CONFIRM", at: string, isSeller:
         : `Check the goods. If something is wrong, report a problem before ${at}. After that, payment is released to the seller automatically.`;
   }
 }
+
+const ACTOR_LABELS = {
+  BUYER: "by the buyer",
+  SELLER: "by the seller",
+  ADMIN: "by Surplo",
+  SYSTEM: "automatically",
+  PAYMENT_PROVIDER: "by the payment provider",
+} as const;

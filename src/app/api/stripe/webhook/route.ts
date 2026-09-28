@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
+import { transitionNow } from "@/lib/order-status";
+import { queueRefund, execute } from "@/lib/money-movements";
 import { notify } from "@/lib/notify";
 import type Stripe from "stripe";
 
@@ -9,38 +11,38 @@ async function markPaid(session: Stripe.Checkout.Session) {
   if (!transactionId) return;
   const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
 
-  // Atomic claim: only one delivery of one payment can move the order to
-  // PAID. A read-then-write here let two concurrent (or duplicate) webhook
-  // deliveries both pass the check.
-  const claimed = await prisma.transaction.updateMany({
-    where: { id: transactionId, orderStatus: "AWAITING_PAYMENT" },
-    data: {
-      orderStatus: "PAID",
-      paymentStatus: "AUTHORIZED",
-      escrowStatus: "HOLDING",
-      paidAt: new Date(),
-      stripePaymentIntentId: paymentIntentId,
-    },
+  // Through the state machine (row lock): only one delivery of one payment
+  // can move the order to PAID. A read-then-write here let two concurrent
+  // (or duplicate) webhook deliveries both pass the check.
+  const was = await transitionNow({
+    id: transactionId,
+    from: ["AWAITING_PAYMENT"],
+    to: "PAID",
+    by: { actor: "PAYMENT_PROVIDER" },
+    reason: `Payment ${paymentIntentId ?? "(no id)"} confirmed by Stripe`,
+    data: { paymentStatus: "AUTHORIZED", escrowStatus: "HOLDING", paidAt: new Date(), stripePaymentIntentId: paymentIntentId },
   });
 
-  if (claimed.count === 0) {
+  if (!was) {
     // Either a repeat delivery of the payment we already recorded (nothing to
     // do), or a *different* payment for an order that is already paid or was
     // cancelled — e.g. a slow SEPA transfer that landed after the buyer also
     // paid by card. That money must go back, not sit silently in our balance.
     const current = await prisma.transaction.findUnique({ where: { id: transactionId } });
     if (current && paymentIntentId && current.stripePaymentIntentId !== paymentIntentId) {
-      await requireStripe().refunds.create(
-        { payment_intent: paymentIntentId },
-        { idempotencyKey: `refund-duplicate-${paymentIntentId}` }
+      const refund = await prisma.$transaction((tx) =>
+        queueRefund(tx, transactionId, paymentIntentId, `refund-duplicate-${paymentIntentId}`)
       );
-      await notify(
-        current.buyerBusinessId,
-        "ORDER_STATUS_CHANGED",
-        "Duplicate payment refunded",
-        "We received a second payment for an order that was already paid or cancelled, so we refunded it automatically.",
-        `/dashboard/orders/${transactionId}`
-      );
+      if (refund.status === "PENDING") await execute(refund.id);
+      if (refund.attempts === 0) {
+        await notify(
+          current.buyerBusinessId,
+          "ORDER_STATUS_CHANGED",
+          "Duplicate payment refunded",
+          "We received a second payment for an order that was already paid or cancelled, so we refunded it automatically.",
+          `/dashboard/orders/${transactionId}`
+        );
+      }
     }
     return;
   }

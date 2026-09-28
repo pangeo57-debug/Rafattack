@@ -81,7 +81,10 @@ export async function POST(req: NextRequest) {
 
   if (buyNow) {
     try {
-      const transaction = await acceptOfferAndCreateTransaction(offer, listing, price, data.quantity);
+      const transaction = await acceptOfferAndCreateTransaction(offer, listing, price, data.quantity, {
+        by: { actor: "BUYER", userId: session.user.id },
+        reason: "Bought at the asking price (Buy now)",
+      });
       return NextResponse.json({ offer, transaction }, { status: 201 });
     } catch (err) {
       if (err instanceof InsufficientStockError) {

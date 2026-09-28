@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCommissionPercent, computeAmounts } from "@/lib/commission";
 import { notify } from "@/lib/notify";
 import type { Offer, Listing } from "@prisma/client";
+import { recordCreated, type Actor } from "@/lib/order-status";
 
 export class InsufficientStockError extends Error {
   constructor() {
@@ -22,7 +23,7 @@ export async function acceptOfferAndCreateTransaction(
   listing: Listing,
   finalPrice: number,
   finalQuantity: number,
-  opts: { buyOrderId?: string } = {}
+  opts: { by: Actor; reason: string; buyOrderId?: string }
 ) {
   const commissionPercent = await getCommissionPercent();
   const { amount, commissionAmount, sellerPayoutAmount } = computeAmounts(
@@ -77,7 +78,7 @@ export async function acceptOfferAndCreateTransaction(
       await tx.listing.update({ where: { id: listing.id }, data: { status: "SOLD_OUT" } });
     }
 
-    return tx.transaction.create({
+    const created = await tx.transaction.create({
       data: {
         offerId: offer.id,
         listingId: listing.id,
@@ -91,6 +92,8 @@ export async function acceptOfferAndCreateTransaction(
         sellerPayoutAmount,
       },
     });
+    await recordCreated(tx, created.id, opts.by, opts.reason);
+    return created;
   });
 
   if (opts.buyOrderId) {

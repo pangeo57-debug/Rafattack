@@ -56,7 +56,8 @@ export async function PATCH(
           offer,
           offer.listing,
           offer.offeredPrice,
-          offer.quantity
+          offer.quantity,
+          { by: { actor: "SELLER", userId: session.user.id }, reason: "Seller accepted the buyer's offer" }
         );
         return NextResponse.json({ offer, transaction });
       } catch (err) {
@@ -106,7 +107,8 @@ export async function PATCH(
           offer,
           offer.listing,
           offer.counterPrice!,
-          offer.counterQuantity!
+          offer.counterQuantity!,
+          { by: { actor: "BUYER", userId: session.user.id }, reason: "Buyer accepted the seller's counter-offer" }
         );
         return NextResponse.json({ offer, transaction });
       } catch (err) {

@@ -11,10 +11,33 @@ export default async function AdminTransactionsPage() {
     include: { listing: true, sellerBusiness: true, buyerBusiness: true },
     take: 100,
   });
+  // Payouts/refunds Stripe hasn't confirmed: retried hourly; FAILED ones
+  // need a person (check the Stripe dashboard, then fix by hand).
+  const stuck = await prisma.moneyMovement.findMany({
+    where: { OR: [{ status: "FAILED" }, { status: "PENDING", attempts: { gt: 0 } }] },
+    include: { transaction: { include: { listing: true } } },
+    orderBy: { createdAt: "asc" },
+  });
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <h1 className="text-2xl font-semibold text-zinc-900">Transactions</h1>
+      {stuck.length > 0 && (
+        <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4" data-testid="stuck-payments">
+          <p className="font-medium text-rose-900">Payments needing attention ({stuck.length})</p>
+          <ul className="mt-2 space-y-1 text-sm text-rose-800">
+            {stuck.map((m) => (
+              <li key={m.id}>
+                <Link href={`/dashboard/orders/${m.transactionId}`} className="underline">{m.transaction.listing.title}</Link>
+                {" · "}
+                {m.kind === "SELLER_PAYOUT" ? "Payout to seller" : "Refund to buyer"}
+                {m.amountCents ? ` ${formatMoney(m.amountCents / 100)}` : " (full)"} · {m.status === "FAILED" ? "FAILED, gave up" : "retrying"} after{" "}
+                {m.attempts} attempt{m.attempts === 1 ? "" : "s"}: {m.lastError}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
         <table className="min-w-full divide-y divide-zinc-200 text-sm">
           <thead className="bg-zinc-50 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">

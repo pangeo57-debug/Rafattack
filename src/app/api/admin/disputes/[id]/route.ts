@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { requireStripe } from "@/lib/stripe";
 import { notify } from "@/lib/notify";
+import { resolveDispute } from "@/lib/order-actions";
 
 export async function PATCH(
   req: NextRequest,
@@ -18,74 +18,23 @@ export async function PATCH(
     return NextResponse.json({ error: "resolution must be SELLER or BUYER" }, { status: 400 });
   }
 
-  const transaction = await prisma.transaction.findUnique({
-    where: { id },
-    include: { sellerBusiness: true },
-  });
+  const transaction = await prisma.transaction.findUnique({ where: { id } });
   if (!transaction) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (transaction.orderStatus !== "DISPUTED") {
+
+  // The state machine locks the order row: a double click or a second admin
+  // tab resolves it once, and moves money once.
+  const text = typeof note === "string" && note.trim() ? note.trim() : "No note";
+  if (!(await resolveDispute(id, resolution, text, session.user.id))) {
     return NextResponse.json({ error: "This order is not under dispute." }, { status: 400 });
   }
 
-  const stripe = requireStripe();
-
-  // Atomically claim the resolution before moving any money — the same
-  // double-click / retry race that could double-pay a seller on COMPLETE
-  // applies here too (an admin could double-click "Resolve", or hit it from
-  // two tabs). Only the first caller's conditional update succeeds; the
-  // second sees count === 0 and stops before calling Stripe.
-  const claimed = await prisma.transaction.updateMany({
-    where: { id, orderStatus: "DISPUTED" },
-    data:
-      resolution === "SELLER"
-        ? {
-            orderStatus: "COMPLETED",
-            paymentStatus: "CAPTURED",
-            escrowStatus: "RELEASED",
-            disputeStatus: "RESOLVED_SELLER",
-            disputeNote: note,
-            completedAt: new Date(),
-          }
-        : {
-            orderStatus: "CANCELLED",
-            paymentStatus: "REFUNDED",
-            escrowStatus: "REFUNDED",
-            disputeStatus: "RESOLVED_BUYER",
-            disputeNote: note,
-            cancelledAt: new Date(),
-          },
-  });
-  if (claimed.count === 0) {
-    return NextResponse.json({ error: "This order is not under dispute." }, { status: 400 });
-  }
-
+  const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
   if (resolution === "SELLER") {
-    if (transaction.sellerBusiness.stripeAccountId) {
-      await stripe.transfers.create(
-        {
-          amount: Math.round(transaction.sellerPayoutAmount * 100),
-          currency: "eur",
-          destination: transaction.sellerBusiness.stripeAccountId,
-          transfer_group: transaction.id,
-          metadata: { transactionId: transaction.id },
-        },
-        { idempotencyKey: `transfer-dispute-${transaction.id}` }
-      );
-    }
-    const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
     await notify(transaction.sellerBusinessId, "DISPUTE_UPDATED", "Dispute resolved in your favor", "The order has been marked completed and your payout released.", `/dashboard/orders/${id}`);
     await notify(transaction.buyerBusinessId, "DISPUTE_UPDATED", "Dispute resolved", "The dispute was resolved in the seller's favor.", `/dashboard/orders/${id}`);
-    return NextResponse.json(updated);
+  } else {
+    await notify(transaction.buyerBusinessId, "DISPUTE_UPDATED", "Dispute resolved in your favor", "Your payment has been released back to you.", `/dashboard/orders/${id}`);
+    await notify(transaction.sellerBusinessId, "DISPUTE_UPDATED", "Dispute resolved", "The dispute was resolved in the buyer's favor.", `/dashboard/orders/${id}`);
   }
-
-  if (transaction.stripePaymentIntentId) {
-    await stripe.refunds.create(
-      { payment_intent: transaction.stripePaymentIntentId },
-      { idempotencyKey: `refund-dispute-${transaction.id}` }
-    );
-  }
-  const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
-  await notify(transaction.buyerBusinessId, "DISPUTE_UPDATED", "Dispute resolved in your favor", "Your payment has been released back to you.", `/dashboard/orders/${id}`);
-  await notify(transaction.sellerBusinessId, "DISPUTE_UPDATED", "Dispute resolved", "The dispute was resolved in the buyer's favor.", `/dashboard/orders/${id}`);
   return NextResponse.json(updated);
 }
