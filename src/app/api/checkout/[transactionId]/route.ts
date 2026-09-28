@@ -55,7 +55,9 @@ export async function POST(
     if (existing.status === "open" && existing.url) {
       return NextResponse.json({ url: existing.url });
     }
-    if (existing.status === "complete") {
+    // A completed session whose payment later failed (e.g. a bounced SEPA
+    // debit) falls through: the buyer was told to try again.
+    if (existing.status === "complete" && transaction.paymentStatus !== "FAILED") {
       return NextResponse.json(
         { error: "Your payment is already being processed for this order." },
         { status: 409 }
@@ -105,7 +107,7 @@ export async function POST(
 
   await prisma.transaction.update({
     where: { id: transaction.id },
-    data: { stripeCheckoutSessionId: checkoutSession.id },
+    data: { stripeCheckoutSessionId: checkoutSession.id, paymentStatus: "PENDING" },
   });
 
   return NextResponse.json({ url: checkoutSession.url });

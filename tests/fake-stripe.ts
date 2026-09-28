@@ -35,7 +35,8 @@ export function resetFakeStripe() {
   calls.refunds.length = 0;
 }
 
-/** Simulate the buyer finishing payment on Stripe's hosted page. */
+/** Simulate the buyer finishing payment on Stripe's hosted page (the
+ * payment itself may still be processing, as with SEPA). */
 export function completeSession(id: string) {
   const s = sessions.get(id);
   if (!s) throw new Error(`no fake session ${id}`);
@@ -67,7 +68,9 @@ export const fakeStripe = {
       },
       expire: async (id: string) => {
         const s = sessions.get(id);
-        if (s && s.status === "open") s.status = "expired";
+        // Real Stripe refuses to expire a session that isn't open.
+        if (!s || s.status !== "open") throw new Error("Only Checkout Sessions with a status in [open] can be expired.");
+        s.status = "expired";
         calls.sessionsExpired.push(id);
         return s;
       },

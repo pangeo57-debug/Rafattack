@@ -51,6 +51,20 @@ export function formatMoney(amount: number) {
   );
 }
 
+/** Date and time for deadlines. Stored in UTC; shown in Greek time with the
+ * zone printed, so nobody has to guess which clock a deadline is on. */
+export function formatDateTime(date: Date | string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Athens",
+    timeZoneName: "short",
+  }).format(new Date(date));
+}
+
 export function formatDate(date: Date | string) {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",

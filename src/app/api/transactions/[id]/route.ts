@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { findTransactionAsParty, notFoundResponse } from "@/lib/access";
 import { requireStripe } from "@/lib/stripe";
 import { notify } from "@/lib/notify";
+import { cancelUnpaidOrder, completeOrder } from "@/lib/order-actions";
 
 const bodySchema = z.object({
   action: z.enum(["CANCEL", "SHIP", "MARK_PICKED_UP", "COMPLETE", "DISPUTE"]),
@@ -33,23 +34,7 @@ export async function PATCH(
   const { action, reason } = parsed.data;
 
   if (action === "CANCEL") {
-    // Cancel and give the reserved units back in one atomic step, so a
-    // double click can't cancel twice and put the stock back twice.
-    const cancelled = await prisma.$transaction(async (tx) => {
-      const claim = await tx.transaction.updateMany({
-        where: { id, orderStatus: "AWAITING_PAYMENT" },
-        data: { orderStatus: "CANCELLED", cancelledAt: new Date() },
-      });
-      if (claim.count === 0) return false;
-      const listing = await tx.listing.update({
-        where: { id: transaction.listingId },
-        data: { quantityAvailable: { increment: transaction.quantity } },
-      });
-      if (listing.status === "SOLD_OUT" && listing.quantityAvailable > 0) {
-        await tx.listing.update({ where: { id: listing.id }, data: { status: "ACTIVE" } });
-      }
-      return true;
-    });
+    const cancelled = await cancelUnpaidOrder(id);
     if (!cancelled) {
       return NextResponse.json({ error: "Only unpaid orders can be cancelled." }, { status: 400 });
     }
@@ -66,16 +51,19 @@ export async function PATCH(
 
   if (action === "SHIP" || action === "MARK_PICKED_UP") {
     if (!isSeller) return NextResponse.json({ error: "Only the seller can update fulfillment." }, { status: 403 });
-    if (transaction.orderStatus !== "PAID") {
-      return NextResponse.json({ error: "Order must be paid first." }, { status: 400 });
-    }
-    const updated = await prisma.transaction.update({
-      where: { id },
+    // Conditional update, not read-then-write: the ship deadline timer may
+    // refund this order at the same moment.
+    const shipped = await prisma.transaction.updateMany({
+      where: { id, orderStatus: "PAID" },
       data: {
         orderStatus: action === "SHIP" ? "SHIPPED" : "PICKED_UP",
         shippedAt: new Date(),
       },
     });
+    if (shipped.count === 0) {
+      return NextResponse.json({ error: "Order must be paid first." }, { status: 400 });
+    }
+    const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
     await notify(
       transaction.buyerBusinessId,
       "ORDER_STATUS_CHANGED",
@@ -92,37 +80,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
     }
 
-    // Atomically claim the completion before paying out: two concurrent
-    // COMPLETE requests (a double-click, a network retry) would otherwise
-    // both read orderStatus as SHIPPED/PICKED_UP and both call
-    // stripe.transfers.create(), paying the seller twice for one order. This
-    // conditional update only succeeds for the first caller; the loser sees
-    // count === 0 and stops before ever touching Stripe.
-    const claimed = await prisma.transaction.updateMany({
-      where: { id, orderStatus: { in: ["SHIPPED", "PICKED_UP"] } },
-      data: {
-        orderStatus: "COMPLETED",
-        paymentStatus: "CAPTURED",
-        escrowStatus: "RELEASED",
-        completedAt: new Date(),
-      },
-    });
-    if (claimed.count === 0) {
+    // Atomic claim inside completeOrder(): a double click or retry pays the
+    // seller exactly once.
+    if (!(await completeOrder(id))) {
       return NextResponse.json({ error: "Order isn't ready to be completed yet." }, { status: 400 });
-    }
-
-    if (transaction.sellerBusiness.stripeAccountId) {
-      const stripe = requireStripe();
-      await stripe.transfers.create(
-        {
-          amount: Math.round(transaction.sellerPayoutAmount * 100),
-          currency: "eur",
-          destination: transaction.sellerBusiness.stripeAccountId,
-          transfer_group: transaction.id,
-          metadata: { transactionId: transaction.id },
-        },
-        { idempotencyKey: `transfer-complete-${transaction.id}` }
-      );
     }
 
     const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
@@ -137,17 +98,20 @@ export async function PATCH(
   }
 
   if (action === "DISPUTE") {
-    if (!["PAID", "SHIPPED", "PICKED_UP"].includes(transaction.orderStatus)) {
-      return NextResponse.json({ error: "This order can't be disputed right now." }, { status: 400 });
-    }
-    const updated = await prisma.transaction.update({
-      where: { id },
+    // Conditional update: the confirm deadline timer may be releasing the
+    // payout at the same moment, and a dispute must not land after that.
+    const disputed = await prisma.transaction.updateMany({
+      where: { id, orderStatus: { in: ["PAID", "SHIPPED", "PICKED_UP"] } },
       data: {
         orderStatus: "DISPUTED",
         disputeStatus: "OPEN",
         disputeReason: reason ?? "No reason provided",
       },
     });
+    if (disputed.count === 0) {
+      return NextResponse.json({ error: "This order can't be disputed right now." }, { status: 400 });
+    }
+    const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } });
     const otherParty = isBuyer ? transaction.sellerBusinessId : transaction.buyerBusinessId;
     await notify(
       otherParty,

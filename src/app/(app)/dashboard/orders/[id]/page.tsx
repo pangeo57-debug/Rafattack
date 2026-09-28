@@ -5,7 +5,8 @@ import { requireBusiness } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { findTransactionAsParty } from "@/lib/access";
 import { buyerBillingForSeller } from "@/lib/invoicing";
-import { ui, badgeColor, formatMoney, formatDate } from "@/lib/ui";
+import { deadlineFor } from "@/lib/order-timers";
+import { ui, badgeColor, formatMoney, formatDate, formatDateTime } from "@/lib/ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import PayButton from "@/components/PayButton";
 import OrderActions from "@/components/OrderActions";
@@ -38,6 +39,8 @@ export default async function OrderDetailPage({
   const myReview = transaction.reviews.find((r) => r.reviewerBusinessId === business.id);
   const otherParty = isSeller ? transaction.buyerBusiness : transaction.sellerBusiness;
   const billing = buyerBillingForSeller(transaction, isSeller);
+  const deadline = deadlineFor(transaction);
+  const deadlineText = deadline && deadlineMessage(deadline.kind, formatDateTime(deadline.at), isSeller);
 
   const timeline = [
     { label: "Order created", at: transaction.createdAt },
@@ -99,6 +102,12 @@ export default async function OrderDetailPage({
           </div>
         </dl>
       </div>
+
+      {deadlineText && (
+        <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800" data-testid="deadline">
+          {deadlineText}
+        </div>
+      )}
 
       {billing && (
         <div className={`${ui.card} mt-4 p-4`} data-testid="buyer-billing">
@@ -196,4 +205,21 @@ export default async function OrderDetailPage({
       )}
     </div>
   );
+}
+
+function deadlineMessage(kind: "PAY" | "SHIP" | "CONFIRM", at: string, isSeller: boolean) {
+  switch (kind) {
+    case "PAY":
+      return isSeller
+        ? `If the buyer doesn't pay by ${at}, the order is cancelled automatically and the units go back on your listing.`
+        : `Please pay by ${at}. After that the order is cancelled automatically.`;
+    case "SHIP":
+      return isSeller
+        ? `Mark this order as shipped or picked up by ${at}. Otherwise the buyer is refunded in full automatically.`
+        : `If the seller hasn't shipped by ${at}, you are refunded in full automatically.`;
+    case "CONFIRM":
+      return isSeller
+        ? `Your payout is released when the buyer confirms receipt, or automatically on ${at} if they don't report a problem.`
+        : `Check the goods. If something is wrong, report a problem before ${at}. After that, payment is released to the seller automatically.`;
+  }
 }
