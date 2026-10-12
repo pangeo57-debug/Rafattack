@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ασκήσεις — Β' Γυμνασίου, Κεφάλαιο 1: Εξισώσεις | MathDecoded</title>
+<meta name="description" content="Λυμένες ασκήσεις με πολλαπλή επιλογή: Β' Γυμνασίου, Κεφάλαιο 1 — Εξισώσεις, Ομάδα Α' (βασικές ασκήσεις).">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#EDE6D3">
+
+<style>
+  :root {
+    --cream: #EDE6D3;
+    --cream-2: #F6F1E5;
+    --cream-dark: #DBC8AA;
+    --ink: #1B1F24;
+    --ink-soft: #4A4740;
+    --teal: #436074;
+    --teal-deep: #2E4453;
+    --orange: #D08F4A;
+    --terracotta: #C06039;
+    --green: #3F7A4E;
+    --red: #B03A2E;
+    --border: rgba(27,31,36,0.14);
+    --radius: 14px;
+    --serif: Georgia, 'Times New Roman', ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.6;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  section { padding: 3.5rem 1.5rem; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--serif); line-height: 1.15; margin: 0 0 0.6em; }
+  h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); }
+  .eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    font-weight: 700;
+    margin-bottom: 0.8em;
+    display: block;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.7em 1.4em;
+    border-radius: 999px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .btn-primary { background: var(--terracotta); color: var(--cream-2); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+  .btn-ghost:hover { background: var(--ink); color: var(--cream); }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(237,230,211,0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav {
+    max-width: 1080px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 1.5rem;
+  }
+  .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+  .brand img { width: 40px; height: 40px; border-radius: 50%; }
+  .brand span { font-family: var(--serif); font-weight: 700; font-size: 1.25rem; letter-spacing: 0.02em; }
+
+  .breadcrumb { font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 0.6rem; }
+  .breadcrumb a { text-decoration: none; font-weight: 600; }
+  .breadcrumb a:hover { color: var(--terracotta); }
+
+  .progress-bar {
+    position: sticky; top: 57px; z-index: 15;
+    background: var(--cream-dark);
+    height: 6px;
+  }
+  .progress-fill { height: 100%; background: var(--terracotta); width: 0%; transition: width 0.2s ease; }
+  .progress-label { text-align: center; font-size: 0.85rem; color: var(--ink-soft); padding-top: 0.6rem; }
+
+  .q-card {
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.6rem;
+    margin-bottom: 1.2rem;
+  }
+  .q-tag {
+    display: inline-block; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    background: var(--teal); color: var(--cream-2);
+    padding: 0.25em 0.7em; border-radius: 999px; margin-bottom: 0.7rem;
+  }
+  .q-num { color: var(--ink-soft); font-weight: 700; margin-right: 0.3em; }
+  .q-text { font-size: 1.08rem; margin-bottom: 1rem; }
+  .q-options { display: grid; gap: 0.6rem; }
+  .q-option {
+    display: block; width: 100%; text-align: left;
+    padding: 0.75em 1em; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--cream);
+    font-family: var(--sans); font-size: 0.98rem; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .q-option:hover:not(:disabled) { border-color: var(--teal); }
+  .q-option:disabled { cursor: default; }
+  .q-option.correct { background: rgba(63,122,78,0.15); border-color: var(--green); font-weight: 700; }
+  .q-option.wrong { background: rgba(176,58,46,0.12); border-color: var(--red); }
+  .q-explain {
+    margin-top: 1rem; padding: 0.9em 1.1em;
+    background: var(--cream); border-left: 3px solid var(--teal);
+    border-radius: 8px; font-size: 0.95rem; display: none;
+  }
+  .q-explain.show { display: block; }
+  .q-explain b { color: var(--teal-deep); }
+
+  footer {
+    text-align: center; padding: 2.4rem 1.5rem; font-size: 0.85rem; color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav">
+    <a class="brand" href="index.html">
+      <img src="icon-192.png" alt="MathDecoded">
+      <span>MathDecoded</span>
+    </a>
+    <a class="btn btn-ghost" href="index.html">← Αρχική</a>
+  </nav>
+</header>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<main>
+  <section>
+    <div class="wrap">
+      <div class="breadcrumb">
+        <a href="index.html">MathDecoded</a> ›
+        <a href="askiseis.html">Αποθετήριο ασκήσεων</a> ›
+        Β' Γυμνασίου › Κεφάλαιο 1: Εξισώσεις › Ομάδα Α'
+      </div>
+      <span class="eyebrow">Αποθετήριο ασκήσεων · Β' Γυμνασίου</span>
+      <h2>Κεφάλαιο 1 — Εξισώσεις<br><small style="font-size:0.65em; color:var(--ink-soft);">Ομάδα Α' · Βασικές ασκήσεις (34)</small></h2>
+      <p style="color:var(--ink-soft);">
+        Διάλεξε απάντηση σε κάθε άσκηση. Θα δεις αμέσως αν είναι σωστή, με επεξήγηση από κάτω.
+      </p>
+      <div class="progress-label" id="progressLabel">0 / 34 απαντημένες</div>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="wrap" id="quizRoot"></div>
+  </section>
+</main>
+
+<footer>
+  &copy; <span id="year"></span> MathDecoded. Αποθετήριο ασκήσεων · Β' Γυμνασίου.
+</footer>
+
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+const EXERCISES = [
+  // --- Απλοποίηση παραστάσεων (1–8) ---
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: −2x + 3x + 5x', options: ['6x', '10x', '4x', '0'], correct: 0, explain: '−2x + 3x + 5x = (−2+3+5)x = 6x.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: 4(x−2) + 3', options: ['4x + 1', '4x − 11', '4x − 8', '4x − 5'], correct: 3, explain: '4(x−2)+3 = 4x−8+3 = 4x−5. Μην ξεχνάς να πολλαπλασιάσεις το 4 με όλους τους όρους της παρένθεσης.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: −5x + 2(3x+1)', options: ['−11x + 2', 'x − 2', '11x + 2', 'x + 2'], correct: 3, explain: '−5x + 2(3x+1) = −5x + 6x + 2 = x + 2.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: 2x − (x−4)', options: ['x − 4', '3x − 4', '−x + 4', 'x + 4'], correct: 3, explain: 'Η αφαίρεση παρένθεσης αλλάζει το πρόσημο σε όλους τους όρους: 2x − x + 4 = x + 4.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: 5 − 3(x+2)', options: ['−3x + 11', '3x − 1', '−3x + 1', '−3x − 1'], correct: 3, explain: '5 − 3(x+2) = 5 − 3x − 6 = −3x − 1. Το −3 πολλαπλασιάζεται και με το +2, δίνοντας −6.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: 2x − (3−x) + 4', options: ['x + 1', '3x − 1', 'x − 1', '3x + 1'], correct: 3, explain: '2x − (3−x) + 4 = 2x − 3 + x + 4 = 3x + 1. Η αφαίρεση της παρένθεσης αλλάζει και το πρόσημο του −x σε +x.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: −2(x+1) + 3(x−1)', options: ['x + 5', '−5x − 5', 'x − 1', 'x − 5'], correct: 3, explain: '−2(x+1)+3(x−1) = −2x−2+3x−3 = x − 5.' },
+  { tag: 'Απλοποίηση', q: 'Να απλοποιήσετε την παράσταση: −(4−x) − 2(x−3)', options: ['x − 2', '−x − 10', '−3x + 2', '2 − x'], correct: 3, explain: '−(4−x) = −4+x και −2(x−3) = −2x+6. Άθροισμα: −4+x−2x+6 = −x+2 = 2−x.' },
+
+  // --- Αριθμητική τιμή παράστασης (9–14) ---
+  { tag: 'Αριθμητική τιμή', q: 'Να βρείτε την τιμή της x² − 3x + 2 για x = −2', options: ['0', '4', '8', '12'], correct: 3, explain: '(−2)² − 3(−2) + 2 = 4 + 6 + 2 = 12. Πρόσεξε τα πρόσημα: −3·(−2) = +6.' },
+  { tag: 'Αριθμητική τιμή', q: 'Να βρείτε την τιμή της 2x − 5 για x = −3', options: ['−1', '1', '11', '−11'], correct: 3, explain: '2(−3) − 5 = −6 − 5 = −11.' },
+  { tag: 'Αριθμητική τιμή', q: 'Να βρείτε την τιμή της x² + x για x = −1', options: ['2', '−2', '−1', '0'], correct: 3, explain: '(−1)² + (−1) = 1 − 1 = 0.' },
+  { tag: 'Αριθμητική τιμή', q: 'Να βρείτε την τιμή της −x + 3(x−1) για x = 4', options: ['13', '7', '4', '5'], correct: 3, explain: '−4 + 3(4−1) = −4 + 3·3 = −4 + 9 = 5.' },
+  { tag: 'Αριθμητική τιμή', q: 'Να βρείτε την τιμή της −x² + 2x για x = −1', options: ['−1', '1', '3', '−3'], correct: 3, explain: '−(−1)² + 2(−1) = −1 − 2 = −3. Πρόσεξε: υψώνεις πρώτα στο τετράγωνο το x (όχι το −x), άρα (−1)²=1 και μετά βάζεις το πρόσημο μείον μπροστά.' },
+  { tag: 'Αριθμητική τιμή', q: 'Να βρείτε την τιμή της (x+1)(x−2) για x = 3', options: ['3', '−8', '5', '4'], correct: 3, explain: '(3+1)(3−2) = 4·1 = 4.' },
+
+  // --- Εξισώσεις α' βαθμού, χωρίς κλάσματα (15–22) ---
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 2x + 3 = 11', options: ['x = 8', 'x = 5,5', 'x = −4', 'x = 4'], correct: 3, explain: '2x = 11−3 = 8 ⟹ x = 4.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 5x − 7 = 2x + 8', options: ['x = 1', 'x = −1', 'x = 15', 'x = 5'], correct: 3, explain: '5x − 2x = 8 + 7 ⟹ 3x = 15 ⟹ x = 5.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 3x + 4 = x + 12', options: ['x = 8', 'x = −4', 'x = 2', 'x = 4'], correct: 3, explain: '3x − x = 12 − 4 ⟹ 2x = 8 ⟹ x = 4.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 7 − x = 2x − 8', options: ['x = 1', 'x = −5', 'x = 15', 'x = 5'], correct: 3, explain: '7 + 8 = 2x + x ⟹ 15 = 3x ⟹ x = 5.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 4(x−1) = 2x + 6', options: ['x = 10', 'x = 1', 'x = −5', 'x = 5'], correct: 3, explain: '4x − 4 = 2x + 6 ⟹ 2x = 10 ⟹ x = 5.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 3(x+2) = 5x − 4', options: ['x = 10', 'x = −5', 'x = 1', 'x = 5'], correct: 3, explain: '3x + 6 = 5x − 4 ⟹ 10 = 2x ⟹ x = 5.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 2(x−3) − (x−3) = 1', options: ['x = −4', 'x = 7', 'x = 1', 'x = 4'], correct: 3, explain: 'Βγάζουμε κοινό παράγοντα (x−3): (2−1)(x−3) = 1 ⟹ x − 3 = 1 ⟹ x = 4.' },
+  { tag: 'Εξίσωση', q: 'Να λύσετε την εξίσωση: 5 − 2(x−1) = x − 2', options: ['x = 9', 'x = −3', 'x = 7', 'x = 3'], correct: 3, explain: '5 − 2x + 2 = x − 2 ⟹ 7 − 2x = x − 2 ⟹ 9 = 3x ⟹ x = 3.' },
+
+  // --- Εξισώσεις με κλάσματα (23–26) ---
+  { tag: 'Εξίσωση με κλάσμα', q: 'Να λύσετε την εξίσωση: x/2 = 3', options: ['x = 1,5', 'x = −6', 'x = 5', 'x = 6'], correct: 3, explain: 'Πολλαπλασιάζουμε με 2: x = 3·2 = 6.' },
+  { tag: 'Εξίσωση με κλάσμα', q: 'Να λύσετε την εξίσωση: 2x/3 = 4', options: ['x = 12', 'x = 2', 'x = 8', 'x = 6'], correct: 3, explain: '2x = 4·3 = 12 ⟹ x = 6. (Προσοχή: μετά το 2x=12 πρέπει να διαιρέσεις ακόμα με το 2.)' },
+  { tag: 'Εξίσωση με κλάσμα', q: 'Να λύσετε την εξίσωση: x/2 + x/3 = 5', options: ['x = 1', 'x = 30', 'x = 15', 'x = 6'], correct: 3, explain: 'Κοινός παρονομαστής 6: 3x + 2x = 30 ⟹ 5x = 30 ⟹ x = 6.' },
+  { tag: 'Εξίσωση με κλάσμα', q: 'Να λύσετε την εξίσωση: (x−1)/2 = 3', options: ['x = 6', 'x = 5', 'x = 8', 'x = 7'], correct: 3, explain: 'x − 1 = 3·2 = 6 ⟹ x = 7.' },
+
+  // --- Προβλήματα (27–34) ---
+  { tag: 'Πρόβλημα', q: 'Ένας αριθμός αυξημένος κατά 7 δίνει 19. Ποιος είναι ο αριθμός;', options: ['26', '−12', '19', '12'], correct: 3, explain: 'x + 7 = 19 ⟹ x = 12.' },
+  { tag: 'Πρόβλημα', q: 'Το τριπλάσιο ενός αριθμού μειωμένο κατά 5 ισούται με 16. Ποιος είναι ο αριθμός;', options: ['21', '−3,67', '3,67', '7'], correct: 3, explain: '3x − 5 = 16 ⟹ 3x = 21 ⟹ x = 7.' },
+  { tag: 'Πρόβλημα', q: 'Δύο διαδοχικοί ακέραιοι έχουν άθροισμα 45. Να τους βρείτε.', options: ['21 και 22', '22 και 24', '23 και 24', '22 και 23'], correct: 3, explain: 'x + (x+1) = 45 ⟹ 2x = 44 ⟹ x = 22, άρα οι αριθμοί είναι 22 και 23.' },
+  { tag: 'Πρόβλημα', q: 'Ορθογώνιο έχει μήκος διπλάσιο από το πλάτος και περίμετρο 42 cm. Να βρείτε τις διαστάσεις του.', options: ['πλάτος 14, μήκος 28', 'πλάτος 10,5, μήκος 21', 'πλάτος 7, μήκος 21', 'πλάτος 7, μήκος 14'], correct: 3, explain: 'Αν πλάτος = w, μήκος = 2w. Περίμετρος: 2(w+2w)=42 ⟹ 6w=42 ⟹ w=7, άρα πλάτος 7 cm και μήκος 14 cm.' },
+  { tag: 'Πρόβλημα', q: 'Η Μαρία έχει 12€ περισσότερα από τον Γιάννη και μαζί έχουν 50€. Πόσα έχει ο καθένας;', options: ['Γιάννης 25€, Μαρία 25€', 'Γιάννης 12€, Μαρία 38€', 'Γιάννης 22€, Μαρία 28€', 'Γιάννης 19€, Μαρία 31€'], correct: 3, explain: 'Αν Γιάννης = x, Μαρία = x+12. x + (x+12) = 50 ⟹ 2x = 38 ⟹ x = 19. Γιάννης 19€, Μαρία 31€.' },
+  { tag: 'Πρόβλημα', q: 'Ισοσκελές τρίγωνο έχει βάση 8 cm και περίμετρο 30 cm. Να βρείτε τις ίσες πλευρές.', options: ['9 cm', '10 cm', '22 cm', '11 cm'], correct: 3, explain: 'Αν η ίση πλευρά είναι s: 2s + 8 = 30 ⟹ 2s = 22 ⟹ s = 11 cm.' },
+  { tag: 'Πρόβλημα', q: 'Οι γωνίες ενός τριγώνου είναι x, x+10°, x+20°. Να τις βρείτε.', options: ['55°, 60°, 65°', '50°, 65°, 65°', '60°, 60°, 60°', '50°, 60°, 70°'], correct: 3, explain: 'x + (x+10) + (x+20) = 180 ⟹ 3x + 30 = 180 ⟹ x = 50. Οι γωνίες είναι 50°, 60°, 70°.' },
+  { tag: 'Πρόβλημα', q: 'Ένα τετράδιο και ένα στυλό κοστίζουν μαζί 4,50€. Το τετράδιο κοστίζει όσο δύο στυλό. Πόσο κοστίζει το καθένα;', options: ['τετράδιο 2,25€, στυλό 2,25€', 'τετράδιο 3,5€, στυλό 1€', 'τετράδιο 4€, στυλό 0,5€', 'τετράδιο 3€, στυλό 1,5€'], correct: 3, explain: 'Αν στυλό = p, τετράδιο = 2p. 2p + p = 4,50 ⟹ 3p = 4,50 ⟹ p = 1,5€ (στυλό), τετράδιο = 3€.' },
+];
+
+const root = document.getElementById('quizRoot');
+let answered = 0;
+
+EXERCISES.forEach((item, i) => {
+  const card = document.createElement('div');
+  card.className = 'q-card';
+
+  const tag = document.createElement('span');
+  tag.className = 'q-tag';
+  tag.textContent = item.tag;
+  card.appendChild(tag);
+
+  const qText = document.createElement('div');
+  qText.className = 'q-text';
+  qText.innerHTML = `<span class="q-num">${i + 1}.</span>${item.q}`;
+  card.appendChild(qText);
+
+  const optsWrap = document.createElement('div');
+  optsWrap.className = 'q-options';
+
+  const explainBox = document.createElement('div');
+  explainBox.className = 'q-explain';
+  explainBox.innerHTML = `<b>Λύση:</b> ${item.explain}`;
+
+  let locked = false;
+  item.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'q-option';
+    btn.type = 'button';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => {
+      if (locked) return;
+      locked = true;
+      answered++;
+      updateProgress();
+      Array.from(optsWrap.children).forEach((el, j) => {
+        el.disabled = true;
+        if (j === item.correct) el.classList.add('correct');
+      });
+      if (idx !== item.correct) btn.classList.add('wrong');
+      explainBox.classList.add('show');
+    });
+    optsWrap.appendChild(btn);
+  });
+
+  card.appendChild(optsWrap);
+  card.appendChild(explainBox);
+  root.appendChild(card);
+});
+
+function updateProgress() {
+  const pct = Math.round((answered / EXERCISES.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${answered} / ${EXERCISES.length} απαντημένες`;
+}
+</script>
+
+</body>
+</html>
