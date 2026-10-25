@@ -122,3 +122,25 @@ describe("the buyer's own requests page", () => {
     expect(html).not.toContain("Post buy request");
   });
 });
+
+describe("the home page leads with buyer demand", () => {
+  const renderHome = async () => renderToStaticMarkup(await (await import("@/app/(public)/page")).default());
+
+  it("shows open requests anonymously, with the real count", async () => {
+    const { buyer } = await scene();
+    await request(buyer.business.id, { category: "Electronics", maxUnitPriceCents: 1000, remainingQty: 10, quantityWanted: 10, minLotQty: 1 });
+    await request(buyer.business.id, { maxUnitPriceCents: 77777, expiresAt: new Date(Date.now() - 1000) });
+    const html = await renderHome();
+    expect(html).toContain('data-testid="home-wanted"');
+    expect(html).toMatch(/2(\s|<!-- -->)*open request/);
+    expect(html).toContain("€3.80");
+    expect(html).not.toContain("€777.77");
+    expect(html).not.toContain("Secret Outlet");
+  });
+
+  it("with no requests it shows no demand section and invents no numbers", async () => {
+    const html = await renderHome();
+    expect(html).not.toContain("home-wanted");
+    expect(html).toContain("to buyers already waiting");
+  });
+});
