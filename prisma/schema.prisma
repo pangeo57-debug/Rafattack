@@ -1,0 +1,561 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlatformRole {
+  USER
+  ADMIN
+}
+
+enum BusinessType {
+  RETAILER
+  RESELLER
+  OUTLET
+  LIQUIDATOR
+  WHOLESALER
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum ListingUnit {
+  ITEM
+  LOT
+}
+
+enum ListingCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  CUSTOMER_RETURNS
+}
+
+enum FulfillmentType {
+  PICKUP
+  SHIPPING
+  BOTH
+}
+
+enum ListingStatus {
+  ACTIVE
+  PAUSED
+  SOLD_OUT
+  EXPIRED
+  REMOVED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+  WITHDRAWN
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  REFUNDED
+  FAILED
+}
+
+enum EscrowStatus {
+  NONE
+  HOLDING
+  RELEASED
+  REFUNDED
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  SHIPPED
+  PICKED_UP
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum DisputeStatus {
+  NONE
+  OPEN
+  RESOLVED_BUYER
+  RESOLVED_SELLER
+}
+
+enum NotificationType {
+  LISTING_MATCH
+  OFFER_RECEIVED
+  OFFER_UPDATED
+  PAYMENT_RECEIVED
+  ORDER_STATUS_CHANGED
+  REVIEW_RECEIVED
+  VERIFICATION_UPDATED
+  DISPUTE_UPDATED
+  LISTING_MODERATED
+}
+
+model Business {
+  id                 String             @id @default(cuid())
+  name               String
+  type               BusinessType
+  category           String
+  country            String
+  city               String
+  address            String?
+  taxId              String
+  contactEmail       String
+  contactPhone       String?
+  verificationStatus    VerificationStatus @default(PENDING)
+  verificationNote      String?
+  verificationDocuments String             @default("[]") // JSON-encoded array of base64 document photos
+
+  stripeAccountId String?
+  stripeOnboarded Boolean @default(false)
+
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users           User[]
+  listings        Listing[]
+  offersMade      Offer[]        @relation("BuyerOffers")
+  savedSearches   SavedSearch[]
+  notifications   Notification[]
+  purchases       Transaction[]  @relation("BuyerTransactions")
+  sales           Transaction[]  @relation("SellerTransactions")
+  reviewsGiven    Review[]       @relation("ReviewerReviews")
+  reviewsReceived Review[]       @relation("RevieweeReviews")
+  buyOrders       BuyOrder[]
+
+  @@index([verificationStatus])
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  name         String
+  platformRole PlatformRole @default(USER)
+
+  emailVerified DateTime?
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model VerificationToken {
+  id         String    @id @default(cuid())
+  identifier String // email
+  token      String    @unique
+  type       TokenType
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+
+  @@index([identifier, type])
+}
+
+model RateLimitAttempt {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Listing {
+  id               String   @id @default(cuid())
+  sellerBusinessId String
+  sellerBusiness   Business @relation(fields: [sellerBusinessId], references: [id])
+
+  title       String
+  description String
+  category    String
+  photos      String @default("[]") // JSON-encoded array of image URLs
+
+  quantityAvailable Int
+  unit              ListingUnit      @default(ITEM)
+  condition         ListingCondition @default(NEW)
+
+  // Money in integer cents (EUR). Never floats.
+  originalPriceCents Int
+  askingPriceCents   Int
+  minOrderQty   Int   @default(1)
+
+  fulfillment     FulfillmentType @default(BOTH)
+  locationCity    String
+  locationCountry String
+
+  status    ListingStatus @default(ACTIVE)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers       Offer[]
+  transactions Transaction[]
+  reports      ListingReport[]
+  moderation   ModerationDecision[]
+
+  @@index([status])
+  @@index([category])
+  @@index([sellerBusinessId])
+}
+
+model Offer {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  buyerBusinessId String
+  buyerBusiness   Business @relation("BuyerOffers", fields: [buyerBusinessId], references: [id])
+
+  offeredPriceCents Int
+  quantity     Int
+  message      String?
+
+  status OfferStatus @default(PENDING)
+
+  counterPriceCents Int?
+  counterQuantity Int?
+  counterMessage  String?
+
+  // Set when the offer was created by a seller filling a standing buy request.
+  buyOrderId String?
+  buyOrder   BuyOrder? @relation(fields: [buyOrderId], references: [id])
+
+  parentOfferId String?
+  parentOffer   Offer?  @relation("OfferChain", fields: [parentOfferId], references: [id])
+  children      Offer[] @relation("OfferChain")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transaction Transaction?
+
+  @@index([listingId])
+  @@index([buyerBusinessId])
+  @@index([status])
+}
+
+model Transaction {
+  id String @id @default(cuid())
+
+  offerId String @unique
+  offer   Offer  @relation(fields: [offerId], references: [id])
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  sellerBusinessId String
+  sellerBusiness   Business @relation("SellerTransactions", fields: [sellerBusinessId], references: [id])
+
+  buyerBusinessId String
+  buyerBusiness   Business @relation("BuyerTransactions", fields: [buyerBusinessId], references: [id])
+
+  quantity  Int
+  // Money in integer cents; commission in basis points (800 = 8%).
+  // amountCents = unitPriceCents * quantity and
+  // commissionCents + sellerPayoutCents = amountCents (DB check constraints).
+  unitPriceCents Int
+  amountCents    Int
+
+  commissionBps     Int
+  commissionCents   Int
+  sellerPayoutCents Int
+
+  paymentStatus PaymentStatus @default(PENDING)
+  escrowStatus  EscrowStatus  @default(NONE)
+  orderStatus   OrderStatus   @default(AWAITING_PAYMENT)
+
+  stripeCheckoutSessionId String?
+  stripePaymentIntentId   String?
+
+  // Filled in by the seller on "Mark as shipped": proof of dispatch.
+  carrier        String?
+  trackingNumber String?
+
+  disputeStatus DisputeStatus @default(NONE)
+  disputeReason String?
+  disputeNote   String?
+
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+  shippedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  reviews  Review[]
+  messages OrderMessage[]
+  events   OrderEvent[]
+  payments MoneyMovement[]
+
+  @@index([orderStatus])
+  @@index([sellerBusinessId])
+  @@index([buyerBusinessId])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  reviewerBusinessId String
+  reviewerBusiness   Business @relation("ReviewerReviews", fields: [reviewerBusinessId], references: [id])
+
+  revieweeBusinessId String
+  revieweeBusiness   Business @relation("RevieweeReviews", fields: [revieweeBusinessId], references: [id])
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([transactionId, reviewerBusinessId])
+  @@index([revieweeBusinessId])
+}
+
+model SavedSearch {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  keyword  String?
+  category String?
+  location String?
+  minPriceCents Int?
+  maxPriceCents Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  type   NotificationType
+  title  String
+  body   String
+  link   String?
+  isRead Boolean          @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId, isRead])
+}
+
+model PlatformSetting {
+  id                String   @id @default("singleton")
+  commissionBps Int      @default(800) // basis points: 800 = 8%
+  updatedAt         DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Digital Services Act: notice and action (Art. 16) and statement of reasons
+// (Art. 17). Anyone can report a listing; an admin decides; the seller gets a
+// written reason. Decisions are append-only.
+// ---------------------------------------------------------------------------
+
+enum ReportReason {
+  ILLEGAL_PRODUCT
+  COUNTERFEIT
+  UNSAFE_PRODUCT
+  MISLEADING
+  FRAUD
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
+
+enum ModerationGround {
+  ILLEGAL_CONTENT
+  TERMS_VIOLATION
+}
+
+model ListingReport {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  reporterUserId String?
+  reporterName   String
+  reporterEmail  String
+  reason         ReportReason
+  explanation    String
+
+  status       ReportStatus @default(OPEN)
+  decisionNote String?
+  decidedAt    DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([status])
+  @@index([listingId])
+}
+
+model ModerationDecision {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+  reportId  String?
+
+  adminUserId  String
+  ground       ModerationGround
+  facts        String
+  termsSection String?
+  createdAt    DateTime         @default(now())
+
+  @@index([listingId])
+}
+
+// ---------------------------------------------------------------------------
+// Standing buy requests: a buyer says in advance what they will buy and at
+// what price. A seller whose listing matches can sell to it in one click.
+// Money is in integer cents (new code follows the rule from day one).
+// ---------------------------------------------------------------------------
+
+enum BuyOrderStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  FILLED
+  EXPIRED
+}
+
+model BuyOrder {
+  id              String   @id @default(cuid())
+  buyerBusinessId String
+  buyerBusiness   Business @relation(fields: [buyerBusinessId], references: [id])
+
+  category          String
+  conditions        ListingCondition[]
+  maxUnitPriceCents Int
+  currency          String             @default("EUR")
+
+  quantityWanted Int
+  remainingQty   Int
+  minLotQty      Int
+
+  country String
+  city    String?
+
+  status       BuyOrderStatus @default(ACTIVE)
+  pausedReason String?
+  expiresAt    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers Offer[]
+
+  @@index([status, category])
+  @@index([buyerBusinessId])
+}
+
+// Messages between buyer and seller of one order. Append-only: they are the
+// record if the order is disputed, so nobody can edit or delete them.
+model OrderMessage {
+  id               String      @id @default(cuid())
+  transactionId    String
+  transaction      Transaction @relation(fields: [transactionId], references: [id])
+  senderBusinessId String
+  body             String
+  createdAt        DateTime    @default(now())
+
+  @@index([transactionId, createdAt])
+}
+
+// Every change of an order's status: who, when, from what to what, why.
+// Written by lib/order-status.ts in the same transaction as the change.
+// Append-only (database trigger).
+enum OrderActor {
+  BUYER
+  SELLER
+  ADMIN
+  SYSTEM
+  PAYMENT_PROVIDER
+}
+
+model OrderEvent {
+  id            String       @id @default(cuid())
+  transactionId String
+  transaction   Transaction  @relation(fields: [transactionId], references: [id])
+  fromStatus    OrderStatus?
+  toStatus      OrderStatus
+  actor         OrderActor
+  actorUserId   String?
+  reason        String?
+  createdAt     DateTime     @default(now())
+
+  @@index([transactionId, createdAt])
+}
+
+// Every payout to a seller and refund to a buyer. Recorded in the same
+// database transaction as the order change that causes it, then executed
+// against Stripe; if Stripe fails, the hourly sweep retries it. See
+// lib/money-movements.ts.
+enum MoneyMovementKind {
+  SELLER_PAYOUT
+  BUYER_REFUND
+}
+
+enum MoneyMovementStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+model MoneyMovement {
+  id              String              @id @default(cuid())
+  transactionId   String
+  transaction     Transaction         @relation(fields: [transactionId], references: [id])
+  kind            MoneyMovementKind
+  amountCents     Int?                // null for a refund = refund the whole payment
+  currency        String              @default("eur")
+  destination     String?             // seller's Stripe account, for payouts
+  paymentIntentId String?             // the payment to refund
+  idempotencyKey  String              @unique
+  status          MoneyMovementStatus @default(PENDING)
+  attempts        Int                 @default(0)
+  lastError       String?
+  stripeObjectId  String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([status])
+  @@index([transactionId])
+}
